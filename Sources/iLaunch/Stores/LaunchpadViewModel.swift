@@ -650,7 +650,11 @@ final class LaunchpadViewModel {
         )
         var bestID: String?
         var bestRatio: CGFloat = 0
-        for info in tileFrames where info.id != sourceID {
+        // Enlarged-folder member icons report their own frames too (for the
+        // AppKit first-click recovery); exclude them here so dragging near a
+        // folder with visible members doesn't preview-merge with one of its
+        // apps instead of the folder itself.
+        for info in tileFrames where info.id != sourceID && !info.isFolderMember {
             let ratio = DragMergeGeometry.overlapRatio(dragged: draggedFrame, target: info.frame)
             if ratio > bestRatio {
                 bestRatio = ratio

@@ -430,16 +430,21 @@ final class OverlayWindowController {
         guard let window else { return false }
         let point = swiftUIPoint(fromWindow: event.locationInWindow, in: window)
 
-        // Smallest containing tile wins (tighter hit among overlapping frames).
-        let hits = viewModel.tileFrames.filter {
-            $0.frame.insetBy(dx: -6, dy: -6).contains(point)
-        }
-        let hit = hits.min {
-            ($0.frame.width * $0.frame.height) < ($1.frame.width * $1.frame.height)
-        }
+        // Smallest containing tile wins (tighter hit among overlapping frames —
+        // e.g. a specific app inside an enlarged folder's 3×3 member preview,
+        // whose mini-icon frame sits inside the folder's own larger frame).
+        let hit = TileHitTesting.smallestHit(in: viewModel.tileFrames, at: point)
 
         if let hit {
-            if hit.isFolder {
+            if hit.isFolderMember, let record = viewModel.appRecord(id: hit.id) {
+                DiagLog.write("firstClick recovery: launch folder-member app id=\(hit.id)")
+                viewModel.finishClosingFolder()
+                NotificationCenter.default.post(name: .iLaunchDismiss, object: nil)
+                DispatchQueue.main.async {
+                    _ = AppLauncher().launch(record)
+                }
+                return true
+            } else if hit.isFolder {
                 if let item = viewModel.gridDisplayItem(id: hit.id) {
                     DiagLog.write("firstClick recovery: open folder id=\(hit.id)")
                     viewModel.openFolderPopup(item)

@@ -1,3 +1,8 @@
+## 1.8.2 - 2026-08-13
+
+### Fixes
+- The very first click after opening the overlay, if it landed on an app icon inside an *enlarged* (2×2) folder's member preview, opened the folder popup instead of launching that app. AppKit's first-click recovery path only knew about the folder's own tile frame — the mini member icons weren't tracked — so any click anywhere inside the folder's bounds was treated as "open folder". Every click after the first one already worked correctly (normal SwiftUI gesture handling already told member taps apart from folder-chrome taps).
+
 ## 1.8.1 - 2026-08-13
 
 ### Fixes

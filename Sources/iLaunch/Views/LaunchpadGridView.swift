@@ -426,7 +426,8 @@ struct LaunchpadGridView: View {
         let draggedArea = max(1, draggedFrame.width * draggedFrame.height)
         var bestID: String?
         var bestRatio: CGFloat = 0
-        for info in tileFrames where info.id != sourceID {
+        // Exclude enlarged-folder member icons (see LaunchpadViewModel.mergePreviewID).
+        for info in tileFrames where info.id != sourceID && !info.isFolderMember {
             let overlap = draggedFrame.intersection(info.frame)
             guard !overlap.isNull, overlap.width > 0, overlap.height > 0 else { continue }
             let ratio = (overlap.width * overlap.height) / draggedArea
@@ -591,15 +592,30 @@ struct LaunchpadGridView: View {
 struct TileFramePreferenceModifier: ViewModifier {
     let id: String
     let isFolder: Bool
+    var isFolderMember: Bool = false
+    /// False skips reporting entirely — used for an enlarged folder's
+    /// carousel pages that are stacked but not currently visible, so their
+    /// (identically-positioned, different-id) member frames don't collide
+    /// with the active page's.
+    var enabled: Bool = true
 
     func body(content: Content) -> some View {
-        content.background {
-            GeometryReader { proxy in
-                Color.clear.preference(
-                    key: TileFramePreferenceKey.self,
-                    value: [TileFrameInfo(id: id, frame: proxy.frame(in: .named("overlay")), isFolder: isFolder)]
-                )
+        if enabled {
+            content.background {
+                GeometryReader { proxy in
+                    Color.clear.preference(
+                        key: TileFramePreferenceKey.self,
+                        value: [TileFrameInfo(
+                            id: id,
+                            frame: proxy.frame(in: .named("overlay")),
+                            isFolder: isFolder,
+                            isFolderMember: isFolderMember
+                        )]
+                    )
+                }
             }
+        } else {
+            content
         }
     }
 }

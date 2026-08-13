@@ -89,7 +89,7 @@ struct EnlargedFolderTileView: View {
                     if pageCount > 1 {
                         carouselContent
                     } else {
-                        iconGrid(members: Array(members.prefix(9)))
+                        iconGrid(members: Array(members.prefix(9)), reportsFrames: true)
                     }
                 }
                 .frame(width: iconAreaWidth, height: iconAreaHeight)
@@ -154,7 +154,12 @@ struct EnlargedFolderTileView: View {
                 ForEach(0..<pageCount, id: \.self) { page in
                     let start = page * 9
                     let slice = Array(members.dropFirst(start).prefix(9))
-                    iconGrid(members: slice)
+                    // Only the visible page reports member frames — every page
+                    // stacks its 3×3 slots at the same on-screen positions, so
+                    // reporting hidden pages too would leave multiple
+                    // same-rect entries with different app ids and make the
+                    // AppKit first-click recovery pick one at random.
+                    iconGrid(members: slice, reportsFrames: page == carouselPage)
                         .opacity(page == carouselPage ? 1 : 0)
                         .allowsHitTesting(page == carouselPage)
                 }
@@ -222,7 +227,7 @@ struct EnlargedFolderTileView: View {
 
     // MARK: - 3×3
 
-    private func iconGrid(members: [AppRecord]) -> some View {
+    private func iconGrid(members: [AppRecord], reportsFrames: Bool) -> some View {
         let spacing: CGFloat = 8
         return Grid(horizontalSpacing: spacing, verticalSpacing: spacing) {
             ForEach(0..<3, id: \.self) { row in
@@ -237,6 +242,12 @@ struct EnlargedFolderTileView: View {
                                 .modifier(EnlargedMemberTapModifier(
                                     record: record,
                                     onActivateMember: onActivateMember
+                                ))
+                                .modifier(TileFramePreferenceModifier(
+                                    id: record.id,
+                                    isFolder: false,
+                                    isFolderMember: true,
+                                    enabled: reportsFrames
                                 ))
                         } else {
                             Color.clear.frame(width: miniIconSize, height: miniIconSize)
