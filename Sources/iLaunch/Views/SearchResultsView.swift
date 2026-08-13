@@ -40,6 +40,10 @@ struct SearchResultsView: View {
                         onTrash: onTrash,
                         onHide: onHide
                     ))
+                    // Reports this tile's frame into the shared "overlay"
+                    // coordinate space so the AppKit click monitor can tell a
+                    // result tap apart from a blank-area dismiss tap.
+                    .modifier(TileFramePreferenceModifier(id: item.id, isFolder: false))
                 }
             }
             .frame(width: gridWidth)

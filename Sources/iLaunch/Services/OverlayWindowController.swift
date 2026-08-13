@@ -388,10 +388,15 @@ final class OverlayWindowController {
 
         // Searching: blank click (outside the search field) exits fullscreen.
         // Handled here because ScrollView often swallows SwiftUI blank taps.
-        // Idle grid: pass the event through so icon taps still launch apps.
+        // A click on a result tile must pass through so SwiftUI's onLaunch
+        // fires — otherwise every result tap silently dismissed the overlay
+        // without opening the app.
         let searching = !viewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         if searching {
             recoverFirstContentClick = false
+            if hitTile(event) {
+                return event
+            }
             hide()
             return nil
         }

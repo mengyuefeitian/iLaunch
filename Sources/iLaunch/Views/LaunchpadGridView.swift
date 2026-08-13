@@ -588,7 +588,7 @@ struct LaunchpadGridView: View {
 
 // MARK: - Tile Frame Preference Helper
 
-private struct TileFramePreferenceModifier: ViewModifier {
+struct TileFramePreferenceModifier: ViewModifier {
     let id: String
     let isFolder: Bool
 

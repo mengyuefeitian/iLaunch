@@ -1,3 +1,9 @@
+## 1.8.1 - 2026-08-13
+
+### Fixes
+- Search field dropped the first typed character (AppKit `interpretKeyEvents` was called on the `NSTextField` instead of its field editor, which is the only object that actually implements text insertion)
+- Tapping an item in the search results list closed the overlay without launching the app (the AppKit click monitor treated every click while searching as a blank-area dismiss, never checking whether it landed on a result tile)
+
 ## 1.8.0 - 2026-07-30
 
 ### Features

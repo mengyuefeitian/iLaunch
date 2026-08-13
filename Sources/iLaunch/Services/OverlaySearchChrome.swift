@@ -203,7 +203,13 @@ final class OverlaySearchChrome: NSObject, NSTextFieldDelegate {
 
     func interpretKeyEvent(_ event: NSEvent) {
         focus()
-        field.interpretKeyEvents([event])
+        // `interpretKeyEvents` delivers its result via `insertText:` /
+        // `doCommandBySelector:` sent back to the receiver — only the field
+        // editor (an NSTextView) implements those, NSTextField does not. Calling
+        // this on `field` itself silently drops the keystroke (later keys work
+        // because they go through normal AppKit routing to the editor instead).
+        let target: NSResponder = field.currentEditor() ?? field
+        target.interpretKeyEvents([event])
         onTextChange?(field.stringValue)
     }
 
