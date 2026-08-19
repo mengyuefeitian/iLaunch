@@ -1,3 +1,13 @@
+## 1.8.4 - 2026-08-19
+
+### Fixes
+- As the very first gesture after opening the overlay, pressing and dragging an icon to merge it into a folder was completely broken — it launched the app instead. AppKit's first-click recovery path (the same code touched by 1.8.3) resolved any mouseDown landing on a tile immediately and synchronously — launch/open-folder — and consumed the event on the spot, before SwiftUI's own gesture recognizers ever saw it. That made it structurally impossible for that mouseDown to ever become a long-press or a drag. Fixed by having AppKit pass tile hits through to SwiftUI instead of resolving them itself — SwiftUI already correctly sorts out tap vs. long-press vs. drag, including the enlarged-folder-member case fixed in 1.8.2. AppKit keeps direct ownership only of the blank-area dismiss, which stays unreliable in pure SwiftUI.
+
+## 1.8.3 - 2026-08-19
+
+### Fixes
+- A first click after opening the overlay, landing in the blank padding around an app/folder icon — clearly off the icon itself, but still inside that tile's full grid-cell bounds — wrongly launched the nearby icon instead of falling through to the expected blank-area dismiss. AppKit's first-click recovery path (`OverlayWindowController.performFirstContentClick`) hit-tested against each tile's full layout-slot frame, not the icon/title's actual clickable region that normal SwiftUI taps respect. Every click after the first already worked correctly. Fixed by hit-testing a new, precisely-scoped "active frame" per tile (icon+title bounds, or an enlarged folder's visible chrome) instead of the full cell.
+
 ## 1.8.2 - 2026-08-13
 
 ### Fixes

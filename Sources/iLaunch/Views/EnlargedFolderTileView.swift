@@ -116,6 +116,10 @@ struct EnlargedFolderTileView: View {
                     .strokeBorder(Color.white.opacity(0.18), lineWidth: 1)
             )
             .contentShape(Rectangle())
+            // Matches this contentShape, not the outer 2×2 layout slot below —
+            // see TileActiveFramePreferenceKey doc for why first-click recovery
+            // needs this tighter rect instead of the full occupancy frame.
+            .modifier(TileActiveFramePreferenceModifier(id: item.id, isFolder: true))
         }
         .frame(width: layoutWidth, height: layoutHeight)
         .onAppear { startAutoAdvance() }
@@ -244,6 +248,16 @@ struct EnlargedFolderTileView: View {
                                     onActivateMember: onActivateMember
                                 ))
                                 .modifier(TileFramePreferenceModifier(
+                                    id: record.id,
+                                    isFolder: false,
+                                    isFolderMember: true,
+                                    enabled: reportsFrames
+                                ))
+                                // Already the tight, contentShape-aligned frame — also
+                                // feed first-click recovery's precise hit test with it.
+                                // Gated the same as above: only the visible carousel
+                                // page's icons should report (see comment at call site).
+                                .modifier(TileActiveFramePreferenceModifier(
                                     id: record.id,
                                     isFolder: false,
                                     isFolderMember: true,

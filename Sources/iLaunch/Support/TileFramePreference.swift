@@ -17,7 +17,30 @@ struct TileFrameInfo: Equatable {
 
 /// Preference key that collects the frames of all interactive tile views
 /// in the overlay's content-view coordinate space (origin top-left).
+///
+/// This is the full **layout slot** for each tile (`tileWidth × tileHeight`,
+/// or the full 2×2 slot for an enlarged folder) — including the blank
+/// padding around the icon/chrome. It exists for geometry that legitimately
+/// wants the generous cell bounds: drag/merge overlap sensing
+/// (`LaunchpadViewModel.mergePreviewID`/`resolveDrop`) and AppKit's
+/// `hitTile` pass-through check. It must NOT be used to decide whether a
+/// click should launch an app — use `TileActiveFramePreferenceKey` for that.
 struct TileFramePreferenceKey: PreferenceKey {
+    static let defaultValue: [TileFrameInfo] = []
+    static func reduce(value: inout [TileFrameInfo], nextValue: () -> [TileFrameInfo]) {
+        value.append(contentsOf: nextValue())
+    }
+}
+
+/// Same shape as `TileFramePreferenceKey`, but the frame reported is the
+/// tile's actual **clickable region** — matching SwiftUI's own
+/// `.contentShape` for that tile (icon+title bounds for a normal app/folder
+/// tile, the visible chrome for an enlarged folder) rather than the full
+/// layout slot. AppKit's first-click recovery (`OverlayWindowController.
+/// performFirstContentClick`) must hit-test against this, not
+/// `TileFramePreferenceKey`, or a click in blank tile padding near an icon
+/// (but outside its actual hit shape) would wrongly launch that app.
+struct TileActiveFramePreferenceKey: PreferenceKey {
     static let defaultValue: [TileFrameInfo] = []
     static func reduce(value: inout [TileFrameInfo], nextValue: () -> [TileFrameInfo]) {
         value.append(contentsOf: nextValue())

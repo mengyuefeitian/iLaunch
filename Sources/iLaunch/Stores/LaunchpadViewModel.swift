@@ -36,6 +36,12 @@ final class LaunchpadViewModel {
     /// detect overlap with folder tiles.
     var tileFrames: [TileFrameInfo] = []
 
+    /// Same identities as `tileFrames`, but each frame is the tile's actual
+    /// clickable region (icon+title bounds, or an enlarged folder's visible
+    /// chrome) rather than the full layout slot. AppKit's first-click
+    /// recovery must hit-test against this — see `TileActiveFramePreferenceKey`.
+    var tileActiveFrames: [TileFrameInfo] = []
+
     /// True once the PreferenceKey has reported at least one batch of tile
     /// frames. Before this, dismiss monitors default to "allow" (pass the
     /// click through) so the first click after overlay-open is never eaten

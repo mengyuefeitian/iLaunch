@@ -64,3 +64,37 @@ import Testing
     // should ever be present in practice (see EnlargedFolderTileView).
     #expect(hit?.id == "a")
 }
+
+/// Regression: as the very first click after opening the overlay, a click in
+/// the *blank padding* around an app icon — clearly outside the icon/title,
+/// but still inside the tile's full 132×150 layout slot — wrongly launched
+/// that app. `OverlayWindowController.performFirstContentClick` was hit-testing
+/// against `tileFrames`, whose reported frame is the full layout slot
+/// (including blank cell padding), not the icon+title's actual `contentShape`
+/// bounds that normal SwiftUI taps respect. The fix hit-tests against
+/// `tileActiveFrames` instead, whose frames are the tight, contentShape-aligned
+/// bounds — reproduced here at the pure hit-testing level.
+@Test func smallestHitIgnoresBlankTilePaddingOutsideActiveFrame() {
+    // Full layout slot (what `tileFrames` reports): 132×150, centered so the
+    // icon (see below) sits inside it with padding on every side.
+    let looseSlotFrame = CGRect(x: 0, y: 0, width: 132, height: 150)
+    // Actual clickable icon+title bounds (what `tileActiveFrames` reports):
+    // narrower and shorter than the slot, per AppIconView's real layout.
+    let tightActiveFrame = CGRect(x: 14, y: 10, width: 104, height: 124)
+
+    // A point clearly inside the loose slot's padding, but outside the tight
+    // active frame — e.g. near the tile's bottom-right corner.
+    let paddingPoint = CGPoint(x: 128, y: 146)
+    #expect(looseSlotFrame.contains(paddingPoint))
+    #expect(!tightActiveFrame.insetBy(dx: -6, dy: -6).contains(paddingPoint))
+
+    let loose = TileFrameInfo(id: "com.example.App", frame: looseSlotFrame, isFolder: false)
+    let tight = TileFrameInfo(id: "com.example.App", frame: tightActiveFrame, isFolder: false)
+
+    // Old behavior (bug): hit-testing the loose slot wrongly matches.
+    #expect(TileHitTesting.smallestHit(in: [loose], at: paddingPoint)?.id == "com.example.App")
+
+    // Fixed behavior: hit-testing the tight active frame correctly finds
+    // nothing, so the click falls through to blank-area dismiss.
+    #expect(TileHitTesting.smallestHit(in: [tight], at: paddingPoint) == nil)
+}

@@ -26,6 +26,17 @@ struct AppIconView: View {
 
     private var drawnIconSize: CGFloat { iconSize * iconScale }
 
+    private var isFolderItem: Bool {
+        if case .folder = item.kind { return true }
+        return false
+    }
+
+    /// Only report first-click-recovery frames on the main grid (`onActivate`
+    /// set); FolderPopupView members and the drag-ghost copy in ContentView
+    /// pass no handlers and must not report competing frames under the same
+    /// item id.
+    private var reportsActiveFrame: Bool { onActivate != nil }
+
     var body: some View {
         VStack(spacing: showName ? 10 : 0) {
             interactiveIcon
@@ -65,6 +76,14 @@ struct AppIconView: View {
                 }
             }
             .contentShape(Rectangle())
+            // Report the actual icon bounds for AppKit's first-click recovery —
+            // scoped to exactly the shape above, not the outer tile cell, or a
+            // click in blank padding around the icon would wrongly launch it.
+            .modifier(TileActiveFramePreferenceModifier(
+                id: item.id,
+                isFolder: isFolderItem,
+                enabled: reportsActiveFrame
+            ))
             .modifier(OptionalIconGestures(
                 onActivate: onActivate,
                 onLongPress: onLongPress,
@@ -81,6 +100,16 @@ struct AppIconView: View {
             .multilineTextAlignment(.center)
             .foregroundStyle(.white)
             .contentShape(Rectangle())
+            // Same reasoning as interactiveIcon above — a second entry under
+            // the same id; `smallestHit` matches either rect containing the
+            // point, closing the small gap between icon and title that a
+            // single icon+title bounding-box frame would have left as a
+            // false-positive "hit" (blank but between the two real shapes).
+            .modifier(TileActiveFramePreferenceModifier(
+                id: item.id,
+                isFolder: isFolderItem,
+                enabled: reportsActiveFrame
+            ))
             .modifier(OptionalIconGestures(
                 onActivate: onActivate,
                 onLongPress: onLongPress,

@@ -160,6 +160,7 @@ final class OverlayWindowController {
         scrollModel.update(isSearching: false, isFolderOpen: false)
         viewModel.tileFramesReady = false
         viewModel.tileFrames = []
+        viewModel.tileActiveFrames = []
         viewModel.finishClosingFolder()
         viewModel.editMode = false
         viewModel.editDragID = nil
@@ -426,39 +427,30 @@ final class OverlayWindowController {
 
     /// AppKit fallback for the first grid interaction after show().
     /// Returns true when the click was fully handled (caller should consume event).
+    ///
+    /// Only handles a **blank-area** first click (dismiss) directly — SwiftUI's
+    /// own blank-tap dismiss has been unreliable enough to need an AppKit
+    /// backstop (see the `openFolder` blank-dismiss comment in `handleMouseDown`
+    /// for the same class of flakiness). A click that hits a tile is passed
+    /// through instead of being resolved here: acting on mouseDown immediately
+    /// (the old behavior) forecloses that mouseDown ever becoming a long-press
+    /// or a drag, since AppKit's local monitor consumes it before SwiftUI's own
+    /// gesture recognizers see it — making it impossible to long-press-drag an
+    /// icon into a folder as the very first gesture after opening the overlay.
+    /// Letting SwiftUI resolve tile hits itself (tap / long-press / drag) is
+    /// correct for all three, including the v1.8.2 case of a tap landing on an
+    /// enlarged folder's member icon — `EnlargedMemberTapModifier` already
+    /// disambiguates that from the folder chrome tap on the SwiftUI side.
     private func performFirstContentClick(_ event: NSEvent) -> Bool {
         guard let window else { return false }
         let point = swiftUIPoint(fromWindow: event.locationInWindow, in: window)
 
-        // Smallest containing tile wins (tighter hit among overlapping frames —
-        // e.g. a specific app inside an enlarged folder's 3×3 member preview,
-        // whose mini-icon frame sits inside the folder's own larger frame).
-        let hit = TileHitTesting.smallestHit(in: viewModel.tileFrames, at: point)
-
-        if let hit {
-            if hit.isFolderMember, let record = viewModel.appRecord(id: hit.id) {
-                DiagLog.write("firstClick recovery: launch folder-member app id=\(hit.id)")
-                viewModel.finishClosingFolder()
-                NotificationCenter.default.post(name: .iLaunchDismiss, object: nil)
-                DispatchQueue.main.async {
-                    _ = AppLauncher().launch(record)
-                }
-                return true
-            } else if hit.isFolder {
-                if let item = viewModel.gridDisplayItem(id: hit.id) {
-                    DiagLog.write("firstClick recovery: open folder id=\(hit.id)")
-                    viewModel.openFolderPopup(item)
-                    return true
-                }
-            } else if let record = viewModel.appRecord(id: hit.id) {
-                DiagLog.write("firstClick recovery: launch app id=\(hit.id)")
-                viewModel.finishClosingFolder()
-                NotificationCenter.default.post(name: .iLaunchDismiss, object: nil)
-                DispatchQueue.main.async {
-                    _ = AppLauncher().launch(record)
-                }
-                return true
-            }
+        // Active (contentShape-tight) frames — not the full layout slot in
+        // `tileFrames` — so a click in blank tile padding near an icon is
+        // correctly treated as blank, not a hit (see TileActiveFramePreferenceKey doc).
+        let hit = TileHitTesting.smallestHit(in: viewModel.tileActiveFrames, at: point)
+        if hit != nil {
+            return false
         }
 
         // Blank area → dismiss overlay (same as SwiftUI blank tap).

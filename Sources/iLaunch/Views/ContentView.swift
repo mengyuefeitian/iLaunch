@@ -145,6 +145,9 @@ struct ContentView: View {
                 viewModel.tileFramesReady = true
             }
         }
+        .onPreferenceChange(TileActiveFramePreferenceKey.self) { frames in
+            viewModel.tileActiveFrames = frames
+        }
         .animation(
             (animEnabled && preferences.animateFolder)
                 ? .spring(response: 0.3, dampingFraction: 0.85)

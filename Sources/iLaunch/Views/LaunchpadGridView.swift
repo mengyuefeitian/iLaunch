@@ -620,6 +620,36 @@ struct TileFramePreferenceModifier: ViewModifier {
     }
 }
 
+/// Reports a tile's actual clickable region (see `TileActiveFramePreferenceKey`).
+/// Attach this at the same layer as the real `.contentShape` — not at the
+/// outer layout-slot wrapper, which has already lost that tighter geometry.
+struct TileActiveFramePreferenceModifier: ViewModifier {
+    let id: String
+    let isFolder: Bool
+    var isFolderMember: Bool = false
+    var enabled: Bool = true
+
+    func body(content: Content) -> some View {
+        if enabled {
+            content.background {
+                GeometryReader { proxy in
+                    Color.clear.preference(
+                        key: TileActiveFramePreferenceKey.self,
+                        value: [TileFrameInfo(
+                            id: id,
+                            frame: proxy.frame(in: .named("overlay")),
+                            isFolder: isFolder,
+                            isFolderMember: isFolderMember
+                        )]
+                    )
+                }
+            }
+        } else {
+            content
+        }
+    }
+}
+
 // MARK: - Edit Drag Notifications
 
 struct EditDragUpdate {
