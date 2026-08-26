@@ -140,7 +140,28 @@ final class OverlayWindowController {
         }
 
         let screen = NSScreen.main ?? NSScreen.screens.first
-        let frame = screen?.frame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
+        let prefs = (try? preferencesStore.load()) ?? .default
+        // visibleFrame excludes BOTH the Dock and the menu bar's screen real
+        // estate, so it can't be used directly — that would also uncover the
+        // menu bar, which should stay covered in both modes. Only carve out
+        // the Dock's own reserved strip (bottom, in the default position) —
+        // visibleFrame.minY sits above frame.minY by exactly the Dock's
+        // height when the Dock is on the bottom edge; 0 otherwise (Dock
+        // auto-hidden by the system, or moved to a side), which safely falls
+        // back to the full screen.
+        let fullFrame = screen?.frame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
+        let frame: NSRect
+        if prefs.hideDockOnLaunch {
+            frame = fullFrame
+        } else {
+            let dockInset = (screen?.visibleFrame.minY ?? fullFrame.minY) - fullFrame.minY
+            frame = NSRect(
+                x: fullFrame.minX,
+                y: fullFrame.minY + dockInset,
+                width: fullFrame.width,
+                height: fullFrame.height - dockInset
+            )
+        }
 
         let window = OverlayWindow(
             contentRect: frame,
@@ -177,7 +198,6 @@ final class OverlayWindowController {
             appToReactivate = front
         }
 
-        let prefs = (try? preferencesStore.load()) ?? .default
         Localizer.setLanguage(prefs.language)
         viewModel.showSystemApplications = prefs.showSystemApplications
         viewModel.showHiddenInSearch = prefs.showHiddenInSearch

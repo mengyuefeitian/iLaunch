@@ -95,7 +95,7 @@ struct UserPreferences: Codable, Equatable {
     var showSystemApplications: Bool
     var overlayDisplayMode: OverlayDisplayMode
     var scanDirectories: [String]
-    var appIconStyle: AppIconStyle = .iconD
+    var appIconStyle: AppIconStyle = .icon02
 
     // New fields for v1.3.0
     var language: Language = .system
@@ -118,6 +118,11 @@ struct UserPreferences: Codable, Equatable {
     /// evidence out of the box; users can turn it off in Settings > About.
     var diagLoggingEnabled: Bool = true
 
+    /// Whether the launcher overlay's window fills the whole screen (so it
+    /// draws over the Dock's screen area) or is sized to the visible frame
+    /// (so the Dock stays on screen alongside the grid). Default on.
+    var hideDockOnLaunch: Bool = true
+
     static let `default` = UserPreferences(
         hotKeyCode: 49,        // kVK_Space
         hotKeyModifiers: 2048, // Carbon optionKey
@@ -134,7 +139,7 @@ struct UserPreferences: Codable, Equatable {
             "/System/Applications",
             "/System/Library/CoreServices/Applications"
         ],
-        appIconStyle: .iconD
+        appIconStyle: .icon02
     )
 
     private enum CodingKeys: String, CodingKey {
@@ -146,9 +151,10 @@ struct UserPreferences: Codable, Equatable {
         case showHiddenInSearch
         case gridRows, gridColumns, iconSizeLevel, showAppNames
         case diagLoggingEnabled
+        case hideDockOnLaunch
     }
 
-    init(hotKeyCode: UInt32, hotKeyModifiers: UInt32, launchAtLogin: Bool, showMenuBarIcon: Bool, showDockIcon: Bool, backgroundBlur: Double, reduceMotion: Bool, showSystemApplications: Bool, overlayDisplayMode: OverlayDisplayMode, scanDirectories: [String], appIconStyle: AppIconStyle = .iconD, language: Language = .system, backgroundMode: BackgroundMode = .desktop, backgroundImages: [String] = [], autoCarousel: Bool = false, animateIcons: Bool = true, animatePageFlip: Bool = true, animateFolder: Bool = true, animateDrag: Bool = true, animateSearch: Bool = true, showHiddenInSearch: Bool = true, gridRows: Int = 4, gridColumns: Int = 7, iconSizeLevel: IconSizeLevel = .medium, showAppNames: Bool = true, diagLoggingEnabled: Bool = true) {
+    init(hotKeyCode: UInt32, hotKeyModifiers: UInt32, launchAtLogin: Bool, showMenuBarIcon: Bool, showDockIcon: Bool, backgroundBlur: Double, reduceMotion: Bool, showSystemApplications: Bool, overlayDisplayMode: OverlayDisplayMode, scanDirectories: [String], appIconStyle: AppIconStyle = .icon02, language: Language = .system, backgroundMode: BackgroundMode = .desktop, backgroundImages: [String] = [], autoCarousel: Bool = false, animateIcons: Bool = true, animatePageFlip: Bool = true, animateFolder: Bool = true, animateDrag: Bool = true, animateSearch: Bool = true, showHiddenInSearch: Bool = true, gridRows: Int = 4, gridColumns: Int = 7, iconSizeLevel: IconSizeLevel = .medium, showAppNames: Bool = true, diagLoggingEnabled: Bool = true, hideDockOnLaunch: Bool = true) {
         self.hotKeyCode = hotKeyCode
         self.hotKeyModifiers = hotKeyModifiers
         self.launchAtLogin = launchAtLogin
@@ -175,6 +181,7 @@ struct UserPreferences: Codable, Equatable {
         self.iconSizeLevel = iconSizeLevel
         self.showAppNames = showAppNames
         self.diagLoggingEnabled = diagLoggingEnabled
+        self.hideDockOnLaunch = hideDockOnLaunch
     }
 
     init(from decoder: Decoder) throws {
@@ -189,7 +196,7 @@ struct UserPreferences: Codable, Equatable {
         showSystemApplications = try c.decode(Bool.self, forKey: .showSystemApplications)
         overlayDisplayMode = try c.decode(OverlayDisplayMode.self, forKey: .overlayDisplayMode)
         scanDirectories = try c.decode([String].self, forKey: .scanDirectories)
-        appIconStyle = (try? c.decodeIfPresent(AppIconStyle.self, forKey: .appIconStyle)) ?? .iconD
+        appIconStyle = (try? c.decodeIfPresent(AppIconStyle.self, forKey: .appIconStyle)) ?? .icon02
         language = (try? c.decodeIfPresent(Language.self, forKey: .language)) ?? .system
         backgroundMode = (try? c.decodeIfPresent(BackgroundMode.self, forKey: .backgroundMode)) ?? .desktop
         backgroundImages = (try? c.decodeIfPresent([String].self, forKey: .backgroundImages)) ?? []
@@ -205,5 +212,6 @@ struct UserPreferences: Codable, Equatable {
         iconSizeLevel = (try? c.decodeIfPresent(IconSizeLevel.self, forKey: .iconSizeLevel)) ?? .medium
         showAppNames = (try? c.decodeIfPresent(Bool.self, forKey: .showAppNames)) ?? true
         diagLoggingEnabled = (try? c.decodeIfPresent(Bool.self, forKey: .diagLoggingEnabled)) ?? true
+        hideDockOnLaunch = (try? c.decodeIfPresent(Bool.self, forKey: .hideDockOnLaunch)) ?? true
     }
 }

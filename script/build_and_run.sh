@@ -40,7 +40,10 @@ cp "$BUILD_BINARY" "$APP_BINARY"
 chmod +x "$APP_BINARY"
 
 APP_RESOURCES="$APP_CONTENTS/Resources"
-ICON_SOURCE="$ROOT_DIR/Resources/$APP_NAME.icns"
+# The bundle's own icon (Finder, Dock before/without a runtime override, DMG
+# window) — defaults to the "Icon 2" variant to match the in-app default
+# (UserPreferences.appIconStyle = .icon02), not the old "D" artwork.
+ICON_SOURCE="$ROOT_DIR/Resources/Icons/icon02.icns"
 mkdir -p "$APP_RESOURCES"
 if [ -f "$ICON_SOURCE" ]; then
   cp "$ICON_SOURCE" "$APP_RESOURCES/$APP_NAME.icns"
@@ -66,9 +69,9 @@ cat >"$INFO_PLIST" <<PLIST
   <key>CFBundleName</key>
   <string>$APP_NAME</string>
   <key>CFBundleShortVersionString</key>
-  <string>1.8.4</string>
+  <string>1.8.10</string>
   <key>CFBundleVersion</key>
-  <string>1.8.4</string>
+  <string>1.8.10</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>LSMinimumSystemVersion</key>
