@@ -281,7 +281,21 @@ final class LaunchpadViewModel {
         }
         appIndex.merge(scanResults: result.records)
         layoutStore.syncDirectoryFolders(result.directoryFolders)
-        layoutStore.pruneApps(notIn: Set(result.records.map(\.id)))
+
+        let validIDs = Set(result.records.map(\.id))
+        let folderMembersBeforePrune = Dictionary(
+            uniqueKeysWithValues: layoutStore.layout.folders.map { ($0.id, $0.items) }
+        )
+        layoutStore.pruneApps(notIn: validIDs)
+        let prunedFromFolders = folderMembersBeforePrune.compactMapValues { items -> [String]? in
+            let removed = items.filter { !validIDs.contains($0) }
+            return removed.isEmpty ? nil : removed
+        }
+        if !prunedFromFolders.isEmpty {
+            let summary = prunedFromFolders.map { "\($0.key): \($0.value.joined(separator: ", "))" }
+                .joined(separator: "; ")
+            DiagLog.write("applyScanResult: pruneApps removed app id(s) not found in this scan's \(validIDs.count) record(s) — \(summary)")
+        }
 
         // Collect Apple's own apps into the managed "Apple" folder before adding
         // the rest to the grid, so freshly installed Apple apps land in the

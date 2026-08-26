@@ -48,11 +48,28 @@ enum iLaunchPaths {
         // One-time migration from the pre-rename product name so existing
         // layout.json / preferences.json / logs are not abandoned.
         let legacyDirectory = base.appendingPathComponent("InceptLaunch", isDirectory: true)
-        if !fileManager.fileExists(atPath: directory.path),
-           fileManager.fileExists(atPath: legacyDirectory.path) {
-            try? fileManager.moveItem(at: legacyDirectory, to: directory)
+        var migrationOutcome: String?
+        if !fileManager.fileExists(atPath: directory.path) {
+            if fileManager.fileExists(atPath: legacyDirectory.path) {
+                do {
+                    try fileManager.moveItem(at: legacyDirectory, to: directory)
+                    migrationOutcome = "migrated legacy InceptLaunch/ -> iLaunch/"
+                } catch {
+                    migrationOutcome = "legacy InceptLaunch/ -> iLaunch/ migration FAILED: \(error) " +
+                        "— data left behind at \(legacyDirectory.path)"
+                }
+            } else {
+                migrationOutcome = "no legacy InceptLaunch/ directory found; starting fresh at \(directory.path)"
+            }
         }
         try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
+        // Logged after the directory above is guaranteed to exist: DiagLog's
+        // own logURL calls back into this function, and by this point the
+        // migration branch above is unreachable (directory now exists), so
+        // this cannot recurse.
+        if let migrationOutcome {
+            DiagLog.write("iLaunchPaths.applicationSupportDirectory: \(migrationOutcome)")
+        }
         return directory
     }
 }

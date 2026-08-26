@@ -157,6 +157,7 @@ struct GeneralSettingsView: View {
                 Toggle(Localizer.t("settings.launchAtLogin"), isOn: $preferences.launchAtLogin)
                 Toggle(Localizer.t("settings.showMenuBarIcon"), isOn: $preferences.showMenuBarIcon)
                 Toggle(Localizer.t("settings.showDockIcon"), isOn: $preferences.showDockIcon)
+                Toggle(Localizer.t("settings.hideDockOnLaunch"), isOn: $preferences.hideDockOnLaunch)
             }
         }
         .formStyle(.grouped)
@@ -166,6 +167,7 @@ struct GeneralSettingsView: View {
         }
         .onChange(of: preferences.showMenuBarIcon) { _, _ in onSave() }
         .onChange(of: preferences.showDockIcon) { _, _ in onSave() }
+        .onChange(of: preferences.hideDockOnLaunch) { _, _ in onSave() }
         .onChange(of: preferences.animateIcons) { _, _ in onSave() }
         .onChange(of: preferences.animatePageFlip) { _, _ in onSave() }
         .onChange(of: preferences.animateFolder) { _, _ in onSave() }

@@ -83,3 +83,37 @@ import Testing
     let decoded = try JSONDecoder.iLaunch.decode(UserPreferences.self, from: data)
     #expect(decoded.diagLoggingEnabled == false)
 }
+
+@Test func defaultPreferencesHideDockOnLaunch() {
+    #expect(UserPreferences.default.hideDockOnLaunch == true)
+}
+
+@Test func decodingLegacyPreferencesWithoutHideDockOnLaunchFieldDefaultsToEnabled() throws {
+    // Simulates a preferences.json written before the hide-Dock-on-launch
+    // toggle existed — it has no hideDockOnLaunch key at all. Must default
+    // to true so the app matches other launcher apps out of the box.
+    let legacyJSON = """
+    {
+        "hotKeyCode": 49,
+        "hotKeyModifiers": 2048,
+        "launchAtLogin": false,
+        "showMenuBarIcon": true,
+        "showDockIcon": true,
+        "backgroundBlur": 0.72,
+        "reduceMotion": false,
+        "showSystemApplications": true,
+        "overlayDisplayMode": "activeDisplay",
+        "scanDirectories": ["/Applications"]
+    }
+    """
+    let decoded = try JSONDecoder.iLaunch.decode(UserPreferences.self, from: Data(legacyJSON.utf8))
+    #expect(decoded.hideDockOnLaunch == true)
+}
+
+@Test func hideDockOnLaunchRoundTripsThroughJSON() throws {
+    var preferences = UserPreferences.default
+    preferences.hideDockOnLaunch = false
+    let data = try JSONEncoder.iLaunch.encode(preferences)
+    let decoded = try JSONDecoder.iLaunch.decode(UserPreferences.self, from: data)
+    #expect(decoded.hideDockOnLaunch == false)
+}

@@ -75,6 +75,7 @@ struct Localizer {
         "settings.launchAtLogin": "Launch at login",
         "settings.showMenuBarIcon": "Show menu bar icon",
         "settings.showDockIcon": "Show Dock icon",
+        "settings.hideDockOnLaunch": "Fill the whole screen (covers the Dock)",
 
         // Appearance settings
         "settings.backgroundBlur": "Background blur",
@@ -181,6 +182,7 @@ struct Localizer {
         "settings.launchAtLogin": "开机自启",
         "settings.showMenuBarIcon": "显示菜单栏图标",
         "settings.showDockIcon": "显示 Dock 图标",
+        "settings.hideDockOnLaunch": "启动时占满全屏（覆盖 Dock 栏）",
 
         // Appearance settings
         "settings.backgroundBlur": "背景模糊",
@@ -287,6 +289,7 @@ struct Localizer {
         "settings.launchAtLogin": "ログイン時に起動",
         "settings.showMenuBarIcon": "メニューバーアイコンを表示",
         "settings.showDockIcon": "Dockアイコンを表示",
+        "settings.hideDockOnLaunch": "全画面表示にする（Dockを覆う）",
 
         // Appearance settings
         "settings.backgroundBlur": "背景のぼかし",
@@ -393,6 +396,7 @@ struct Localizer {
         "settings.launchAtLogin": "로그인 시 실행",
         "settings.showMenuBarIcon": "메뉴 막대 아이콘 표시",
         "settings.showDockIcon": "Dock 아이콘 표시",
+        "settings.hideDockOnLaunch": "전체 화면으로 표시 (Dock을 덮음)",
 
         // Appearance settings
         "settings.backgroundBlur": "배경 흐림",
@@ -499,6 +503,7 @@ struct Localizer {
         "settings.launchAtLogin": "Запускать при входе",
         "settings.showMenuBarIcon": "Показывать значок в строке меню",
         "settings.showDockIcon": "Показывать значок в Dock",
+        "settings.hideDockOnLaunch": "На весь экран (закрывает Dock)",
 
         // Appearance settings
         "settings.backgroundBlur": "Размытие фона",

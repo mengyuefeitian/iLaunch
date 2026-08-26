@@ -1,3 +1,33 @@
+## 1.8.10 - 2026-08-26
+
+### Fixes
+- All four app icon variants had a noticeable amount of empty padding around the badge (content sized to ~76% of the 1024×1024 canvas), which read as "not filling the square" in Finder/Quick Look. Regenerated all icon `.icns` files (and their Settings-picker thumbnails) at ~86% content ratio, matching typical macOS app icon sizing, via `script/optimize_icons.sh`.
+
+## 1.8.9 - 2026-08-26
+
+### Fixes
+- 1.8.8 only changed the in-app default icon preference, which `IconSwitcher` applies to the Dock icon at runtime — the packaged `.app` bundle's own icon (Finder, DMG window, and the Dock icon before the app finishes launching) still shipped with the old "D" artwork. `script/build_and_run.sh` now sources the bundle icon from `Resources/Icons/icon02.icns` directly, so all of these match "Icon 2" too.
+
+## 1.8.8 - 2026-08-26
+
+### Changes
+- Default app icon changed from "D" to "Icon 2" (Settings > Interface > Appearance > App Icon).
+
+## 1.8.7 - 2026-08-26
+
+### Fixes
+- With the 1.8.6 "Fill the whole screen (covers the Dock)" toggle turned off, the menu bar was uncovered along with the Dock — `NSScreen.visibleFrame` excludes both, not just the Dock. Fixed by carving only the Dock's own reserved strip out of the full-screen frame, so the overlay still covers the menu bar in both modes and only the Dock's visibility changes with the toggle.
+
+## 1.8.6 - 2026-08-26
+
+### Features
+- Settings > General > Launch: new "Fill the whole screen (covers the Dock)" toggle, on by default. Turning it off sizes the launcher overlay to the screen's visible frame instead of the full screen, so the system Dock stays on screen and clickable alongside the grid, matching other launcher-style apps. No system-level Dock hide/show APIs are involved — this only changes whether the overlay's window extends into the Dock's screen area.
+
+## 1.8.5 - 2026-08-21
+
+### Diagnostics
+- A user reported merged folders disappearing after relaunch, not reproducible locally. The failure paths that could silently cause this — the one-time `InceptLaunch/` → `iLaunch/` data migration failing, `LayoutPersistenceStore` falling back to a temp directory when Application Support is unreachable, `layout.json` load/save errors, and `pruneApps` dropping folder members not found in a scan — all used `try?` and left no trace. Each now logs its outcome (including the specific app ids `pruneApps` removes and from which folder) to the existing diagnostic log, so the next report can be root-caused from `~/Library/Application Support/iLaunch/logs/incept_diag.log` instead of guessed at. No behavior change.
+
 ## 1.8.4 - 2026-08-19
 
 ### Fixes
