@@ -420,7 +420,18 @@ The Sparkle SPM package vends a `generate_keys` CLI tool as a plugin/executable.
 swift build --product generate_keys 2>/dev/null || find .build -name "generate_keys" -type f
 ```
 
-Run the located `generate_keys` binary with no arguments. It prints a public key (base64 EdDSA key, ~44 characters ending in `=`) and stores the private key in your macOS Keychain under the service name it reports (Sparkle's default: `https://sparkle-project.org` / account `ed25519`). **Copy the printed public key** — it goes into Step 2 below. The private key stays in Keychain; do not export or commit it.
+Run the located `generate_keys` binary with no arguments. It prints a public key (base64 EdDSA key, ~44 characters ending in `=`) and stores the private key in your macOS Keychain under the service name it reports (Sparkle's default: `https://sparkle-project.org` / account `ed25519`). **Copy the printed public key** — it goes into Step 2 below.
+
+**Deviation from macOS Keychain (ruling, recorded 2026-09-11):** the user explicitly rejected using macOS Keychain for private key storage. Export the private key out of Keychain to a plain, owner-only file, then remove it from Keychain entirely:
+
+```bash
+mkdir -p "$HOME/.config/ilaunch"
+generate_keys -x "$HOME/.config/ilaunch/sparkle_signing_key"
+chmod 600 "$HOME/.config/ilaunch/sparkle_signing_key"
+security delete-generic-password -s "https://sparkle-project.org" -a "ed25519"
+```
+
+From this point on, signing uses `sign_update -f "$HOME/.config/ilaunch/sparkle_signing_key"` (see Task 7's `publish_release.sh`, which reads this path from `SPARKLE_PRIVATE_KEY_FILE`, defaulting to `$HOME/.config/ilaunch/sparkle_signing_key`). The public key and its Info.plist value are unaffected by this change — only the private key's storage location changes. The private key file itself must never be committed or leave this machine ungoverned; back it up to a password manager or encrypted volume if you need a second copy, not to git.
 
 - [ ] **Step 2: Add the Sparkle keys to `Info.plist`**
 
@@ -491,11 +502,19 @@ set -euo pipefail
 
 # Signs a release .dmg with Sparkle's EdDSA key and prints the appcast
 # <item> XML to paste into docs/appcast.xml. Manual, per-release — not run
-# by CI. Requires the private key generated in Task 6 Step 1 to be present
-# in this machine's Keychain.
+# by CI. Requires the private key file exported in Task 6 Step 1
+# (generate_keys -x) to be present at SPARKLE_PRIVATE_KEY_FILE. Deliberately
+# not Keychain-based: the private key lives only in a plain, owner-only file
+# outside git, never in macOS Keychain.
 
 VERSION="${1:?Usage: publish_release.sh <version> <path-to-dmg>}"
 DMG_PATH="${2:?Usage: publish_release.sh <version> <path-to-dmg>}"
+
+SPARKLE_PRIVATE_KEY_FILE="${SPARKLE_PRIVATE_KEY_FILE:-$HOME/.config/ilaunch/sparkle_signing_key}"
+if [ ! -f "$SPARKLE_PRIVATE_KEY_FILE" ]; then
+  echo "error: private key file not found at $SPARKLE_PRIVATE_KEY_FILE — set SPARKLE_PRIVATE_KEY_FILE or run 'generate_keys -x <file>' first" >&2
+  exit 1
+fi
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SIGN_UPDATE="$(find "$ROOT_DIR/.build" -name "sign_update" -type f | head -n 1)"
@@ -505,8 +524,10 @@ if [ -z "$SIGN_UPDATE" ]; then
   exit 1
 fi
 
-SIGNATURE_LINE="$("$SIGN_UPDATE" "$DMG_PATH")"
-FILE_SIZE="$(stat -f%z "$DMG_PATH")"
+# sign_update's stdout already includes both sparkle:edSignature and length
+# attributes — do not add a second length= here, it would produce invalid
+# XML (duplicate attribute on the same element).
+SIGNATURE_LINE="$("$SIGN_UPDATE" -f "$SPARKLE_PRIVATE_KEY_FILE" "$DMG_PATH")"
 DOWNLOAD_URL="https://github.com/mengyuefeitian/iLaunch/releases/download/v${VERSION}/$(basename "$DMG_PATH")"
 
 cat <<ITEM
@@ -521,19 +542,20 @@ Paste this <item> into docs/appcast.xml, inside <channel>, above any older entri
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <enclosure
         url="${DOWNLOAD_URL}"
-        length="${FILE_SIZE}"
         type="application/octet-stream"
         ${SIGNATURE_LINE} />
     </item>
 ITEM
 ```
 
+(This reflects the fix-round correction to the original duplicate-`length=` bug and the Keychain→file ruling, both applied during execution — see the SDD ledger.)
+
 - [ ] **Step 3: Make it executable and verify it runs**
 
 Run: `chmod +x script/publish_release.sh`
 Run: `swift build --product sign_update`
 Run: `./script/publish_release.sh 1.8.11 dist/iLaunch.dmg` (using whatever `.dmg` `package_dmg.sh` last produced, or run `bash script/package_dmg.sh` first if none exists)
-Expected: prints an `<item>` block with a real `sparkle:edSignature` attribute inside `${SIGNATURE_LINE}` — confirms the Keychain-stored private key from Task 6 Step 1 is being found and used.
+Expected: prints an `<item>` block with a real `sparkle:edSignature` attribute inside `${SIGNATURE_LINE}` — confirms the file-based private key from Task 6 Step 1 is being found and used.
 
 - [ ] **Step 4: Commit**
 

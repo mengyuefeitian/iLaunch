@@ -3,11 +3,19 @@ set -euo pipefail
 
 # Signs a release .dmg with Sparkle's EdDSA key and prints the appcast
 # <item> XML to paste into docs/appcast.xml. Manual, per-release — not run
-# by CI. Requires the private key generated in Task 6 Step 1 to be present
-# in this machine's Keychain.
+# by CI. Requires the private key file exported in Task 6 Step 1
+# (generate_keys -x) to be present at SPARKLE_PRIVATE_KEY_FILE. Deliberately
+# not Keychain-based: the private key lives only in a plain, owner-only file
+# outside git, never in macOS Keychain.
 
 VERSION="${1:?Usage: publish_release.sh <version> <path-to-dmg>}"
 DMG_PATH="${2:?Usage: publish_release.sh <version> <path-to-dmg>}"
+
+SPARKLE_PRIVATE_KEY_FILE="${SPARKLE_PRIVATE_KEY_FILE:-$HOME/.config/ilaunch/sparkle_signing_key}"
+if [ ! -f "$SPARKLE_PRIVATE_KEY_FILE" ]; then
+  echo "error: private key file not found at $SPARKLE_PRIVATE_KEY_FILE — set SPARKLE_PRIVATE_KEY_FILE or run 'generate_keys -x <file>' first" >&2
+  exit 1
+fi
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SIGN_UPDATE="$(find "$ROOT_DIR/.build" -name "sign_update" -type f | head -n 1)"
@@ -20,7 +28,7 @@ fi
 # sign_update's stdout already includes both sparkle:edSignature and length
 # attributes — do not add a second length= here, it would produce invalid
 # XML (duplicate attribute on the same element).
-SIGNATURE_LINE="$("$SIGN_UPDATE" "$DMG_PATH")"
+SIGNATURE_LINE="$("$SIGN_UPDATE" -f "$SPARKLE_PRIVATE_KEY_FILE" "$DMG_PATH")"
 DOWNLOAD_URL="https://github.com/mengyuefeitian/iLaunch/releases/download/v${VERSION}/$(basename "$DMG_PATH")"
 
 cat <<ITEM
