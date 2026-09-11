@@ -26,9 +26,41 @@ struct Localizer {
 
     static func setLanguage(_ lang: UserPreferences.Language) {
         let newLang = AppLanguage.from(lang)
+        applySparkleLocaleOverride(for: newLang)
         guard newLang != current else { return }
         current = newLang
         NotificationCenter.default.post(name: .iLaunchLanguageChanged, object: nil)
+    }
+
+    /// Sparkle's own update-check alerts are real NSLocalizedString lookups
+    /// against Sparkle.framework's bundle, which resolves its language from
+    /// the process's "AppleLanguages" preference (system locale) — not from
+    /// this app's own `current`/`t(_:)` lookup. Mirroring the app's language
+    /// choice into that key is the standard technique for making a bundled
+    /// framework like Sparkle follow an in-app language switch. Must run
+    /// before Sparkle's bundle is first touched (i.e. before `UpdateService`
+    /// is constructed) to take effect on the very first update check.
+    static func applySparkleLocaleOverride(for lang: AppLanguage) {
+        let defaults = UserDefaults.standard
+        guard let override = appleLanguagesOverride(for: lang) else {
+            defaults.removeObject(forKey: "AppleLanguages")
+            return
+        }
+        defaults.set(override, forKey: "AppleLanguages")
+    }
+
+    /// Pure mapping, kept separate from `UserDefaults` so it can be unit
+    /// tested. Matches Sparkle.framework's shipped localizations exactly
+    /// (zh_CN.lproj, ja.lproj, ko.lproj, ru.lproj, Base.lproj for English).
+    static func appleLanguagesOverride(for lang: AppLanguage) -> [String]? {
+        switch lang {
+        case .system: return nil
+        case .chinese: return ["zh-CN"]
+        case .english: return ["en"]
+        case .japanese: return ["ja"]
+        case .korean: return ["ko"]
+        case .russian: return ["ru"]
+        }
     }
 
     static func t(_ key: String) -> String {

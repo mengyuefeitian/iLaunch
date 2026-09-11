@@ -32,6 +32,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         DiagLog.configure(enabled: prefs.diagLoggingEnabled)
         IconSwitcher.apply(prefs.appIconStyle)
         LoginItemService.apply(prefs.launchAtLogin)
+        // Must run before UpdateService() below — Sparkle's own alert text
+        // resolves its language the moment its bundle is first touched, so
+        // the AppleLanguages override needs to already be in place.
+        Localizer.setLanguage(prefs.language)
         updateService = UpdateService()
         // Hotkey must open (or toggle) and then re-assert keyboard focus —
         // Carbon hotkeys fire while another app is frontmost.
