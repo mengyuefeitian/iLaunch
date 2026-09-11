@@ -55,6 +55,21 @@ if [ -d "$ROOT_DIR/Resources/Icons" ]; then
   cp "$ROOT_DIR/Resources/Icons/"thumb_*.png "$APP_RESOURCES/" 2>/dev/null || true
 fi
 
+# Embed Sparkle.framework — this project has no Xcode project to do this
+# automatically, so the framework must be copied and rpath'd by hand.
+APP_FRAMEWORKS="$APP_CONTENTS/Frameworks"
+mkdir -p "$APP_FRAMEWORKS"
+SPARKLE_FRAMEWORK="$(find "$ROOT_DIR/.build" -type d -name "Sparkle.framework" -path "*macos*" 2>/dev/null | head -n 1)"
+if [ -z "$SPARKLE_FRAMEWORK" ]; then
+  SPARKLE_FRAMEWORK="$(find "$ROOT_DIR/.build" -type d -name "Sparkle.framework" 2>/dev/null | head -n 1)"
+fi
+if [ -n "$SPARKLE_FRAMEWORK" ]; then
+  rm -rf "$APP_FRAMEWORKS/Sparkle.framework"
+  cp -R "$SPARKLE_FRAMEWORK" "$APP_FRAMEWORKS/Sparkle.framework"
+else
+  echo "warning: Sparkle.framework not found under $ROOT_DIR/.build — auto-update will not work in this build" >&2
+fi
+
 cat >"$INFO_PLIST" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
