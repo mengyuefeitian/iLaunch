@@ -140,6 +140,7 @@ struct Localizer {
         "menubar.open": "Open iLaunch",
         "menubar.settings": "Settings…",
         "menubar.logs": "Open Log File",
+        "menubar.checkForUpdates": "Check for Updates…",
         "menubar.quit": "Quit",
 
         // Search
@@ -247,6 +248,7 @@ struct Localizer {
         "menubar.open": "打开 iLaunch",
         "menubar.settings": "设置…",
         "menubar.logs": "打开日志文件",
+        "menubar.checkForUpdates": "检查更新…",
         "menubar.quit": "退出",
 
         // Search
@@ -354,6 +356,7 @@ struct Localizer {
         "menubar.open": "iLaunchを開く",
         "menubar.settings": "設定…",
         "menubar.logs": "ログファイルを開く",
+        "menubar.checkForUpdates": "アップデートを確認…",
         "menubar.quit": "終了",
 
         // Search
@@ -461,6 +464,7 @@ struct Localizer {
         "menubar.open": "iLaunch 열기",
         "menubar.settings": "설정…",
         "menubar.logs": "로그 파일 열기",
+        "menubar.checkForUpdates": "업데이트 확인…",
         "menubar.quit": "종료",
 
         // Search
@@ -567,6 +571,7 @@ struct Localizer {
         "menubar.open": "Открыть iLaunch",
         "menubar.settings": "Настройки…",
         "menubar.logs": "Открыть файл журнала",
+        "menubar.checkForUpdates": "Проверить обновления…",
         "menubar.quit": "Выйти",
 
         // Search

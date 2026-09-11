@@ -6,17 +6,20 @@ final class MenuBarController: NSObject {
     private let overlay: OverlayWindowController
     private weak var hotKeyManager: GlobalHotKeyManager?
     private let settings = SettingsWindowController()
+    private let updateService: UpdateService?
     private let statusMenu = NSMenu()
     private var languageObserver: NSObjectProtocol?
     private var iconObserver: NSObjectProtocol?
 
     private var settingsItem: NSMenuItem!
     private var logsItem: NSMenuItem!
+    private var checkForUpdatesItem: NSMenuItem!
     private var quitItem: NSMenuItem!
 
-    init(overlay: OverlayWindowController, hotKeyManager: GlobalHotKeyManager?) {
+    init(overlay: OverlayWindowController, hotKeyManager: GlobalHotKeyManager?, updateService: UpdateService?) {
         self.overlay = overlay
         self.hotKeyManager = hotKeyManager
+        self.updateService = updateService
         super.init()
 
         applyIcon()
@@ -28,6 +31,10 @@ final class MenuBarController: NSObject {
         logsItem = NSMenuItem(title: "", action: #selector(openLogs), keyEquivalent: "")
         logsItem.target = self
         statusMenu.addItem(logsItem)
+
+        checkForUpdatesItem = NSMenuItem(title: "", action: #selector(checkForUpdates), keyEquivalent: "")
+        checkForUpdatesItem.target = self
+        statusMenu.addItem(checkForUpdatesItem)
 
         statusMenu.addItem(NSMenuItem.separator())
 
@@ -74,6 +81,7 @@ final class MenuBarController: NSObject {
     private func refreshMenuTitles() {
         settingsItem.title = Localizer.t("menubar.settings")
         logsItem.title = Localizer.t("menubar.logs")
+        checkForUpdatesItem.title = Localizer.t("menubar.checkForUpdates")
         quitItem.title = Localizer.t("menubar.quit")
     }
 
@@ -98,6 +106,10 @@ final class MenuBarController: NSObject {
             DiagLog.write("log file created")
         }
         NSWorkspace.shared.activateFileViewerSelecting([logURL])
+    }
+
+    @objc private func checkForUpdates() {
+        updateService?.checkForUpdates()
     }
 
     @objc private func quit() {
