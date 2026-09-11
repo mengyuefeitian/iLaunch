@@ -57,9 +57,9 @@ struct UserPreferences: Codable, Equatable {
 
         var multiplier: CGFloat {
             switch self {
-            case .small: return 0.65
-            case .medium: return 0.80
-            case .large: return 1.0
+            case .small: return 0.715
+            case .medium: return 0.88
+            case .large: return 1.1
             }
         }
     }

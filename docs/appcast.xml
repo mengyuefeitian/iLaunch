@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+  <channel>
+    <title>iLaunch Updates</title>
+    <link>https://mengyuefeitian.github.io/iLaunch/appcast.xml</link>
+    <description>Most recent updates for iLaunch.</description>
+    <language>en</language>
+  </channel>
+</rss>

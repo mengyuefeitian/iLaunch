@@ -5,6 +5,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let overlay = OverlayWindowController()
     private var menuBarController: MenuBarController?
     private var hotKeyManager: GlobalHotKeyManager?
+    private var updateService: UpdateService?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Two iLaunch.app copies (e.g. /Applications and a locally built
@@ -31,6 +32,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         DiagLog.configure(enabled: prefs.diagLoggingEnabled)
         IconSwitcher.apply(prefs.appIconStyle)
         LoginItemService.apply(prefs.launchAtLogin)
+        updateService = UpdateService()
         // Hotkey must open (or toggle) and then re-assert keyboard focus —
         // Carbon hotkeys fire while another app is frontmost.
         hotKeyManager = GlobalHotKeyManager { [overlay] in
@@ -39,7 +41,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
         hotKeyManager?.start(keyCode: prefs.hotKeyCode, modifiers: prefs.hotKeyModifiers)
-        menuBarController = MenuBarController(overlay: overlay, hotKeyManager: hotKeyManager)
+        menuBarController = MenuBarController(overlay: overlay, hotKeyManager: hotKeyManager, updateService: updateService)
         // Launch straight into the full-screen launchpad overlay.
         overlay.show()
     }

@@ -55,6 +55,22 @@ if [ -d "$ROOT_DIR/Resources/Icons" ]; then
   cp "$ROOT_DIR/Resources/Icons/"thumb_*.png "$APP_RESOURCES/" 2>/dev/null || true
 fi
 
+# Embed Sparkle.framework — this project has no Xcode project to do this
+# automatically, so the framework must be copied and rpath'd by hand.
+APP_FRAMEWORKS="$APP_CONTENTS/Frameworks"
+mkdir -p "$APP_FRAMEWORKS"
+SPARKLE_FRAMEWORK="$(find "$ROOT_DIR/.build" -type d -name "Sparkle.framework" -path "*macos*" 2>/dev/null | head -n 1)"
+if [ -z "$SPARKLE_FRAMEWORK" ]; then
+  SPARKLE_FRAMEWORK="$(find "$ROOT_DIR/.build" -type d -name "Sparkle.framework" 2>/dev/null | head -n 1)"
+fi
+if [ -n "$SPARKLE_FRAMEWORK" ]; then
+  rm -rf "$APP_FRAMEWORKS/Sparkle.framework"
+  cp -R "$SPARKLE_FRAMEWORK" "$APP_FRAMEWORKS/Sparkle.framework"
+else
+  echo "error: Sparkle.framework not found under $ROOT_DIR/.build — the app cannot launch without it. Run 'swift build' first." >&2
+  exit 1
+fi
+
 cat >"$INFO_PLIST" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -69,13 +85,21 @@ cat >"$INFO_PLIST" <<PLIST
   <key>CFBundleName</key>
   <string>$APP_NAME</string>
   <key>CFBundleShortVersionString</key>
-  <string>1.8.10</string>
+  <string>1.9.0</string>
   <key>CFBundleVersion</key>
-  <string>1.8.10</string>
+  <string>1.9.0</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>LSMinimumSystemVersion</key>
   <string>$MIN_SYSTEM_VERSION</string>
+  <key>SUFeedURL</key>
+  <string>https://mengyuefeitian.github.io/iLaunch/appcast.xml</string>
+  <key>SUPublicEDKey</key>
+  <string>rBqYZ63t+TCinVotwTkgUM9BFQeTm5DNwxzmiNeYIpo=</string>
+  <key>SUEnableAutomaticChecks</key>
+  <true/>
+  <key>SUScheduledCheckInterval</key>
+  <integer>86400</integer>
   <key>NSPrincipalClass</key>
   <string>NSApplication</string>
 </dict>

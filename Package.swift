@@ -9,10 +9,19 @@ let package = Package(
     products: [
         .executable(name: "iLaunch", targets: ["iLaunch"])
     ],
+    dependencies: [
+        .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.6.0")
+    ],
     targets: [
         .executableTarget(
             name: "iLaunch",
-            path: "Sources/iLaunch"
+            dependencies: [
+                .product(name: "Sparkle", package: "Sparkle")
+            ],
+            path: "Sources/iLaunch",
+            linkerSettings: [
+                .unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "@executable_path/../Frameworks"])
+            ]
         ),
         .testTarget(
             name: "iLaunchTests",
