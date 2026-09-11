@@ -91,6 +91,14 @@ cat >"$INFO_PLIST" <<PLIST
   <string>APPL</string>
   <key>LSMinimumSystemVersion</key>
   <string>$MIN_SYSTEM_VERSION</string>
+  <key>SUFeedURL</key>
+  <string>https://mengyuefeitian.github.io/iLaunch/appcast.xml</string>
+  <key>SUPublicEDKey</key>
+  <string>rBqYZ63t+TCinVotwTkgUM9BFQeTm5DNwxzmiNeYIpo=</string>
+  <key>SUEnableAutomaticChecks</key>
+  <true/>
+  <key>SUScheduledCheckInterval</key>
+  <integer>86400</integer>
   <key>NSPrincipalClass</key>
   <string>NSApplication</string>
 </dict>
