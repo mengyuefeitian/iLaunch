@@ -1,3 +1,13 @@
+## 1.9.0 - 2026-09-11
+
+### Features
+- Automatic updates via Sparkle: the app checks for new releases once a day in the background, and a "Check for Updates…" menu item lets you check on demand. Updates install with a single click, downloaded and verified against an EdDSA signature before install.
+
+## 1.8.11 - 2026-09-11
+
+### Changes
+- Increased app icon size by 1.1x across all three size levels (small/medium/large) in the launcher grid.
+
 ## 1.8.10 - 2026-08-26
 
 ### Fixes

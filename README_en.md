@@ -100,7 +100,8 @@ Where iLaunch is headed, tracked against the original
 | **v1.6** Visual & control | Liquid Glass folders, grid/icon settings, Russian, drag-out sensing | ✅ Done |
 | **v1.7** Fluid interaction | Folder zoom open/close, mini-icon launch, fast dismiss, first-click fix | ✅ Done |
 | **v1.8** Rebrand | InceptLaunch → iLaunch rename, seamless data migration | ✅ Done |
-| **v2.0** Stable release | Multi-display & Spaces, performance, first-run guide, auto-update, signing & notarization | 📋 Planned |
+| **v1.9** Auto-update | Sparkle-based auto-update, daily background checks, "Check for Updates…" menu item, one-click install | ✅ Done |
+| **v2.0** Stable release | Multi-display & Spaces, performance, first-run guide, signing & notarization | 📋 Planned |
 
 ### Coming next
 

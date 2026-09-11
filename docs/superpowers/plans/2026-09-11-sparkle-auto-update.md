@@ -520,7 +520,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SIGN_UPDATE="$(find "$ROOT_DIR/.build" -name "sign_update" -type f | head -n 1)"
 
 if [ -z "$SIGN_UPDATE" ]; then
-  echo "error: sign_update tool not found under .build — run 'swift build --product sign_update' first" >&2
+  echo "error: sign_update tool not found under .build — run 'swift package resolve' first" >&2
   exit 1
 fi
 
@@ -553,7 +553,7 @@ ITEM
 - [ ] **Step 3: Make it executable and verify it runs**
 
 Run: `chmod +x script/publish_release.sh`
-Run: `swift build --product sign_update`
+Run: `swift package resolve`
 Run: `./script/publish_release.sh 1.8.11 dist/iLaunch.dmg` (using whatever `.dmg` `package_dmg.sh` last produced, or run `bash script/package_dmg.sh` first if none exists)
 Expected: prints an `<item>` block with a real `sparkle:edSignature` attribute inside `${SIGNATURE_LINE}` — confirms the file-based private key from Task 6 Step 1 is being found and used.
 

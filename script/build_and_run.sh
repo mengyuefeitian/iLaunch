@@ -67,7 +67,8 @@ if [ -n "$SPARKLE_FRAMEWORK" ]; then
   rm -rf "$APP_FRAMEWORKS/Sparkle.framework"
   cp -R "$SPARKLE_FRAMEWORK" "$APP_FRAMEWORKS/Sparkle.framework"
 else
-  echo "warning: Sparkle.framework not found under $ROOT_DIR/.build — auto-update will not work in this build" >&2
+  echo "error: Sparkle.framework not found under $ROOT_DIR/.build — the app cannot launch without it. Run 'swift build' first." >&2
+  exit 1
 fi
 
 cat >"$INFO_PLIST" <<PLIST
