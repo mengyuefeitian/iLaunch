@@ -5,5 +5,17 @@
     <link>https://mengyuefeitian.github.io/iLaunch/appcast.xml</link>
     <description>Most recent updates for iLaunch.</description>
     <language>en</language>
+
+    <item>
+      <title>Version 1.9.0</title>
+      <pubDate>Fri, 11 Sep 2026 10:19:35 +0800</pubDate>
+      <sparkle:version>1.9.0</sparkle:version>
+      <sparkle:shortVersionString>1.9.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <enclosure
+        url="https://github.com/mengyuefeitian/iLaunch/releases/download/v1.9.0/iLaunch-1.9.0-local.dmg"
+        type="application/octet-stream"
+        sparkle:edSignature="6uxpMhu2i7un9okIqNMmizSQfIfIikrwpF4ZqAZCUIp8KQoh27n/WcXfT9ZctjLTS3gYDZQGBoNNpGT77C61Cg==" length="6193805" />
+    </item>
   </channel>
 </rss>
