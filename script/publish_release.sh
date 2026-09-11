@@ -17,8 +17,10 @@ if [ -z "$SIGN_UPDATE" ]; then
   exit 1
 fi
 
+# sign_update's stdout already includes both sparkle:edSignature and length
+# attributes — do not add a second length= here, it would produce invalid
+# XML (duplicate attribute on the same element).
 SIGNATURE_LINE="$("$SIGN_UPDATE" "$DMG_PATH")"
-FILE_SIZE="$(stat -f%z "$DMG_PATH")"
 DOWNLOAD_URL="https://github.com/mengyuefeitian/iLaunch/releases/download/v${VERSION}/$(basename "$DMG_PATH")"
 
 cat <<ITEM
@@ -33,7 +35,6 @@ Paste this <item> into docs/appcast.xml, inside <channel>, above any older entri
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <enclosure
         url="${DOWNLOAD_URL}"
-        length="${FILE_SIZE}"
         type="application/octet-stream"
         ${SIGNATURE_LINE} />
     </item>
