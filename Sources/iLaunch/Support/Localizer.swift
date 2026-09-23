@@ -35,6 +35,7 @@ struct Localizer {
         Bundle.activateLanguageOverride()
         guard newLang != current else { return }
         current = newLang
+        Bundle.overrideLanguage = newLang
         NotificationCenter.default.post(name: .iLaunchLanguageChanged, object: nil)
     }
 

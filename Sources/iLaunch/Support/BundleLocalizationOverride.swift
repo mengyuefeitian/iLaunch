@@ -44,9 +44,9 @@ extension Bundle {
     /// documented workaround for making a bundled framework like Sparkle
     /// follow an in-app language switch, since the simpler AppleLanguages
     /// override does not work here (see `SparkleLocalizationFolder` above).
-    /// Safe process-wide: this app's own UI goes through the custom
-    /// `Localizer.t(_:)` dictionary, not `NSLocalizedString`, so only
-    /// third-party bundles are actually affected.
+    /// This app's own UI goes through the custom `Localizer.t(_:)`
+    /// dictionary, not `NSLocalizedString`, but system frameworks (AppKit,
+    /// Foundation) also go through this swizzle — from any thread.
     private static let activateOnce: Void = {
         let originalSelector = #selector(Bundle.localizedString(forKey:value:table:))
         let swizzledSelector = #selector(Bundle.iLaunch_localizedString(forKey:value:table:))
@@ -59,6 +59,19 @@ extension Bundle {
 
     static func activateLanguageOverride() {
         _ = activateOnce
+    }
+
+    /// Thread-safe copy of `Localizer.current` for the swizzle. The swizzle
+    /// is process-wide, so AppKit/Foundation call it from background queues
+    /// too (e.g. `NSWorkspace.recycle` building a localized error on its
+    /// "NSWorkspace background queue") — it must never touch main-actor
+    /// state. Kept in sync by `Localizer.setLanguage`.
+    private static let overrideLanguageLock = NSLock()
+    nonisolated(unsafe) private static var storedOverrideLanguage: AppLanguage = .system
+
+    static var overrideLanguage: AppLanguage {
+        get { overrideLanguageLock.withLock { storedOverrideLanguage } }
+        set { overrideLanguageLock.withLock { storedOverrideLanguage = newValue } }
     }
 
     @objc private func iLaunch_localizedString(forKey key: String, value: String?, table tableName: String?) -> String {
@@ -79,9 +92,6 @@ extension Bundle {
     private static var desiredLocalizationFolderName: String? {
         let systemCode = Locale.preferredLanguages.first
             .flatMap { Locale(identifier: $0).language.languageCode?.identifier } ?? "en"
-        // Sparkle's alert string lookups happen on the main thread (AppKit
-        // UI), same as this app's own Localizer usage — safe to assume.
-        let currentLanguage = MainActor.assumeIsolated { Localizer.current }
-        return SparkleLocalizationFolder.folderName(for: currentLanguage, systemLanguageCode: systemCode)
+        return SparkleLocalizationFolder.folderName(for: overrideLanguage, systemLanguageCode: systemCode)
     }
 }

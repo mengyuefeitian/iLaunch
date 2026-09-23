@@ -22,3 +22,15 @@ import Testing
     #expect(SparkleLocalizationFolder.folderName(for: .system, systemLanguageCode: "en") == nil)
     #expect(SparkleLocalizationFolder.folderName(for: .system, systemLanguageCode: "fr") == nil)
 }
+
+// Regression (v1.9.2 crash): the swizzle is process-wide, so AppKit calls it
+// from background queues too — e.g. NSWorkspace.recycle building a
+// localized error on "NSWorkspace background queue" when moving an app to
+// the Trash. The lookup must not assume main-actor isolation.
+@Test func swizzledLocalizedStringIsSafeOffTheMainThread() async {
+    Bundle.activateLanguageOverride()
+    let result = await Task.detached {
+        Bundle.main.localizedString(forKey: "iLaunchTestKey", value: "fallback", table: nil)
+    }.value
+    #expect(result == "fallback")
+}
