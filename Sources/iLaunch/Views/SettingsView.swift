@@ -97,7 +97,21 @@ struct SettingsView: View {
             }
         }
         .id(languageVersion)
-        .frame(width: 700, height: 520)
+        // The hosting window uses `.fullSizeContentView` so NavigationSplitView's
+        // toolbar scroll-edge effect lands correctly under the titlebar (see
+        // SettingsWindowController). That makes the hosting view taller than
+        // the window's nominal content size by the titlebar/toolbar height,
+        // and that extra height isn't a fixed constant — it varies with the
+        // OS version, window subtitle, and accessibility text size. Rather
+        // than hardcode it, use a flexible frame with contentSize as the
+        // minimum so the root always grows to fill whatever the hosting view
+        // actually is, with no empty strips top or bottom.
+        .frame(
+            minWidth: SettingsWindowController.contentSize.width,
+            maxWidth: .infinity,
+            minHeight: SettingsWindowController.contentSize.height,
+            maxHeight: .infinity
+        )
         .onAppear {
             preferences = (try? preferencesStore.load()) ?? .default
             Localizer.setLanguage(preferences.language)

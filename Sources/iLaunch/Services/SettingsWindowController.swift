@@ -3,6 +3,19 @@ import SwiftUI
 
 @MainActor
 final class SettingsWindowController {
+    /// `SettingsView` uses `NavigationSplitView`, which installs a toolbar on
+    /// the window. SwiftUI's toolbar scroll-edge effect assumes the content
+    /// view extends under the titlebar/toolbar; without `.fullSizeContentView`
+    /// the content view starts below the titlebar, so the blur effect lands
+    /// one toolbar-height too low, covering the top of the detail pane.
+    static let windowStyleMask: NSWindow.StyleMask = [.titled, .closable, .resizable, .fullSizeContentView]
+
+    /// The window's content rect (unchanged from before `.fullSizeContentView`
+    /// was added). The window's on-screen size stays the same as it always
+    /// was — `NSWindow` still adds the titlebar/toolbar height on top of this
+    /// when computing the frame.
+    static let contentSize = NSSize(width: 700, height: 520)
+
     private var window: NSWindow?
     private weak var viewModel: LaunchpadViewModel?
     private weak var hotKeyManager: GlobalHotKeyManager?
@@ -18,8 +31,8 @@ final class SettingsWindowController {
             return
         }
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 700, height: 520),
-            styleMask: [.titled, .closable, .resizable],
+            contentRect: NSRect(origin: .zero, size: Self.contentSize),
+            styleMask: Self.windowStyleMask,
             backing: .buffered,
             defer: false
         )
