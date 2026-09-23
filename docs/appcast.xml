@@ -7,6 +7,18 @@
     <language>en</language>
 
     <item>
+      <title>Version 1.9.5</title>
+      <pubDate>Wed, 23 Sep 2026 12:18:36 +0800</pubDate>
+      <sparkle:version>1.9.5</sparkle:version>
+      <sparkle:shortVersionString>1.9.5</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <enclosure
+        url="https://github.com/mengyuefeitian/iLaunch/releases/download/v1.9.5/iLaunch-1.9.5-local.dmg"
+        type="application/octet-stream"
+        sparkle:edSignature="hYEYujJgt0PVLwjn8E96jCxAkqm/PoUoBtxdmGSZdNiiQnPnNjiHGM8bw9R0TjnYwC3Z28BJKAoGi7Wq5WuiCQ==" length="6183810" />
+    </item>
+
+    <item>
       <title>Version 1.9.3</title>
       <pubDate>Wed, 23 Sep 2026 11:48:20 +0800</pubDate>
       <sparkle:version>1.9.3</sparkle:version>
