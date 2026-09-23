@@ -84,14 +84,16 @@ import Testing
     #expect(decoded.diagLoggingEnabled == false)
 }
 
-@Test func defaultPreferencesHideDockOnLaunch() {
-    #expect(UserPreferences.default.hideDockOnLaunch == true)
+@Test func defaultPreferencesDoesNotCoverDock() {
+    #expect(UserPreferences.default.coverDock == false)
 }
 
-@Test func decodingLegacyPreferencesWithoutHideDockOnLaunchFieldDefaultsToEnabled() throws {
-    // Simulates a preferences.json written before the hide-Dock-on-launch
-    // toggle existed — it has no hideDockOnLaunch key at all. Must default
-    // to true so the app matches other launcher apps out of the box.
+@Test func decodingLegacyPreferencesWithOldHideDockOnLaunchKeyDefaultsToNotCoveringDock() throws {
+    // Simulates a preferences.json written by a version that still had the
+    // old `hideDockOnLaunch` flag (which every existing user has saved as
+    // `true`). The product decision is that everyone gets the new
+    // Dock-visible behaviour after upgrading, so the old key must be
+    // ignored entirely — not read as a synonym for `coverDock`.
     let legacyJSON = """
     {
         "hotKeyCode": 49,
@@ -103,17 +105,18 @@ import Testing
         "reduceMotion": false,
         "showSystemApplications": true,
         "overlayDisplayMode": "activeDisplay",
-        "scanDirectories": ["/Applications"]
+        "scanDirectories": ["/Applications"],
+        "hideDockOnLaunch": true
     }
     """
     let decoded = try JSONDecoder.iLaunch.decode(UserPreferences.self, from: Data(legacyJSON.utf8))
-    #expect(decoded.hideDockOnLaunch == true)
+    #expect(decoded.coverDock == false)
 }
 
-@Test func hideDockOnLaunchRoundTripsThroughJSON() throws {
+@Test func coverDockRoundTripsThroughJSON() throws {
     var preferences = UserPreferences.default
-    preferences.hideDockOnLaunch = false
+    preferences.coverDock = true
     let data = try JSONEncoder.iLaunch.encode(preferences)
     let decoded = try JSONDecoder.iLaunch.decode(UserPreferences.self, from: data)
-    #expect(decoded.hideDockOnLaunch == false)
+    #expect(decoded.coverDock == true)
 }

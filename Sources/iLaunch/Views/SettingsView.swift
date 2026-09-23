@@ -56,7 +56,7 @@ struct SettingsView: View {
             // `ScrollView` + `VStack` has no such row layer, so every click
             // reaches the Button on the first try.
             ScrollView {
-                VStack(spacing: 2) {
+                VStack(spacing: 6) {
                     ForEach(SettingsCategory.allCases) { category in
                         let isSelected = selectedCategory == category
                         Button {
@@ -64,11 +64,11 @@ struct SettingsView: View {
                         } label: {
                             Label(Localizer.t(category.localizationKey), systemImage: category.icon)
                                 .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.vertical, 8)
+                                .padding(.horizontal, 8)
                                 .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
-                        .padding(.vertical, 4)
-                        .padding(.horizontal, 8)
                         .background(
                             RoundedRectangle(cornerRadius: 6)
                                 .fill(isSelected ? Color.accentColor : Color.clear)
@@ -157,7 +157,7 @@ struct GeneralSettingsView: View {
                 Toggle(Localizer.t("settings.launchAtLogin"), isOn: $preferences.launchAtLogin)
                 Toggle(Localizer.t("settings.showMenuBarIcon"), isOn: $preferences.showMenuBarIcon)
                 Toggle(Localizer.t("settings.showDockIcon"), isOn: $preferences.showDockIcon)
-                Toggle(Localizer.t("settings.hideDockOnLaunch"), isOn: $preferences.hideDockOnLaunch)
+                Toggle(Localizer.t("settings.coverDock"), isOn: $preferences.coverDock)
             }
         }
         .formStyle(.grouped)
@@ -167,7 +167,7 @@ struct GeneralSettingsView: View {
         }
         .onChange(of: preferences.showMenuBarIcon) { _, _ in onSave() }
         .onChange(of: preferences.showDockIcon) { _, _ in onSave() }
-        .onChange(of: preferences.hideDockOnLaunch) { _, _ in onSave() }
+        .onChange(of: preferences.coverDock) { _, _ in onSave() }
         .onChange(of: preferences.animateIcons) { _, _ in onSave() }
         .onChange(of: preferences.animatePageFlip) { _, _ in onSave() }
         .onChange(of: preferences.animateFolder) { _, _ in onSave() }
@@ -363,6 +363,8 @@ struct AboutView: View {
     let preferences: UserPreferences
     @State private var showCopied = false
 
+    private static let githubURLString = "https://github.com/mengyuefeitian/iLaunch"
+
     private var appIcon: NSImage? {
         IconThumbnailCache.image(named: preferences.appIconStyle.resourceName)
     }
@@ -398,7 +400,10 @@ struct AboutView: View {
 
             VStack(spacing: 10) {
                 linkRow(label: Localizer.t("about.website"), value: "www.xiaoanhome.xyz") {
-                    NSWorkspace.shared.open(URL(string: "https://www.xiaoanhome.xyz/")!)
+                    NSWorkspace.shared.open(URL(string: Self.githubURLString)!)
+                }
+                linkRow(label: "GitHub", value: Self.githubURLString) {
+                    NSWorkspace.shared.open(URL(string: Self.githubURLString)!)
                 }
                 linkRow(label: "X", value: "@countquery") {
                     NSWorkspace.shared.open(URL(string: "https://x.com/countquery")!)
@@ -433,6 +438,7 @@ struct AboutView: View {
             Button(action: action) {
                 Text(value)
                     .foregroundStyle(Color.accentColor)
+                    .lineLimit(1)
             }
             .buttonStyle(.plain)
         }

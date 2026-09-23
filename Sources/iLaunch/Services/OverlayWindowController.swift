@@ -61,6 +61,15 @@ final class OverlayWindowController {
     private var recoverFirstContentClick = false
     /// App that was frontmost before we stole focus — reactivated on hide.
     private var appToReactivate: NSRunningApplication?
+    /// Whether the current session covers the Dock (legacy) vs. leaves it
+    /// floating on top of the overlay (default). Captured from prefs in
+    /// show() so hide() can undo the matching presentation options.
+    private var coverDock = false
+    /// Dock-visible mode only: clicking a Dock icon activates that app,
+    /// whose windows would otherwise render below our overlay (which sits
+    /// just under the Dock's window level). Observed only in that mode so
+    /// we can get out of the way without stealing focus back.
+    private var resignActiveObserver: NSObjectProtocol?
 
     var exposedViewModel: LaunchpadViewModel { viewModel }
 
@@ -141,27 +150,11 @@ final class OverlayWindowController {
 
         let screen = NSScreen.main ?? NSScreen.screens.first
         let prefs = (try? preferencesStore.load()) ?? .default
-        // visibleFrame excludes BOTH the Dock and the menu bar's screen real
-        // estate, so it can't be used directly — that would also uncover the
-        // menu bar, which should stay covered in both modes. Only carve out
-        // the Dock's own reserved strip (bottom, in the default position) —
-        // visibleFrame.minY sits above frame.minY by exactly the Dock's
-        // height when the Dock is on the bottom edge; 0 otherwise (Dock
-        // auto-hidden by the system, or moved to a side), which safely falls
-        // back to the full screen.
-        let fullFrame = screen?.frame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
-        let frame: NSRect
-        if prefs.hideDockOnLaunch {
-            frame = fullFrame
-        } else {
-            let dockInset = (screen?.visibleFrame.minY ?? fullFrame.minY) - fullFrame.minY
-            frame = NSRect(
-                x: fullFrame.minX,
-                y: fullFrame.minY + dockInset,
-                width: fullFrame.width,
-                height: fullFrame.height - dockInset
-            )
-        }
+        coverDock = prefs.coverDock
+        // Always the full screen frame — the background fills behind the
+        // Dock even in Dock-visible mode; only the window LEVEL (see below)
+        // determines whether the Dock renders on top of it.
+        let frame = screen?.frame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
 
         let window = OverlayWindow(
             contentRect: frame,
@@ -169,7 +162,7 @@ final class OverlayWindowController {
             backing: .buffered,
             defer: false
         )
-        window.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.mainMenuWindow)) + 1)
+        window.level = OverlayPresentation.windowLevel(coverDock: coverDock)
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle]
         window.isOpaque = false
         window.backgroundColor = .clear
@@ -237,6 +230,39 @@ final class OverlayWindowController {
         // Must unhide + activate + makeKey or local key monitors never fire and
         // typing never reaches the search field.
         activateForKeyboard(window)
+
+        // Must be set AFTER activation — presentationOptions apply to the
+        // active app, so setting it before activate() here is a no-op.
+        NSApp.presentationOptions = OverlayPresentation.presentationOptions(coverDock: coverDock)
+
+        if !coverDock {
+            installResignActiveObserver()
+        }
+    }
+
+    /// Dock-visible mode only: a Dock click activates the clicked app before
+    /// its windows can render, and those windows would otherwise be stuck
+    /// below our overlay (which sits just under the Dock's window level).
+    /// Get out of the way — but do NOT reactivate `appToReactivate`, which
+    /// would steal focus straight back from the app the user just clicked.
+    private func installResignActiveObserver() {
+        removeResignActiveObserver()
+        resignActiveObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didResignActiveNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.hide(reactivatePrevious: false)
+            }
+        }
+    }
+
+    private func removeResignActiveObserver() {
+        if let observer = resignActiveObserver {
+            NotificationCenter.default.removeObserver(observer)
+            resignActiveObserver = nil
+        }
     }
 
     /// Bring the overlay (and the app) to the front so keyboard events work.
@@ -294,7 +320,11 @@ final class OverlayWindowController {
         }
     }
 
-    func hide() {
+    /// - Parameter reactivatePrevious: false when the overlay is being
+    ///   dismissed because a Dock click activated another app — that app
+    ///   should keep focus, not `appToReactivate`.
+    func hide(reactivatePrevious: Bool = true) {
+        removeResignActiveObserver()
         removeScrollMonitor()
         removeClickMonitor()
         removeKeyMonitor()
@@ -305,11 +335,12 @@ final class OverlayWindowController {
         window?.orderOut(nil)
         window = nil
         recoverFirstContentClick = false
+        NSApp.presentationOptions = []
 
         // Do NOT NSApp.hide — the matching unhide makes the next show()'s first
         // click a no-op for SwiftUI (app/folder/blank all need a second click).
         // Hand focus back to whoever was frontmost before we opened.
-        if let previous = appToReactivate, !previous.isTerminated {
+        if reactivatePrevious, let previous = appToReactivate, !previous.isTerminated {
             previous.activate()
         }
         appToReactivate = nil

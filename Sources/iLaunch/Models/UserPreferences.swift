@@ -118,10 +118,11 @@ struct UserPreferences: Codable, Equatable {
     /// evidence out of the box; users can turn it off in Settings > About.
     var diagLoggingEnabled: Bool = true
 
-    /// Whether the launcher overlay's window fills the whole screen (so it
-    /// draws over the Dock's screen area) or is sized to the visible frame
-    /// (so the Dock stays on screen alongside the grid). Default on.
-    var hideDockOnLaunch: Bool = true
+    /// Whether the launcher overlay's window covers the Dock (drawn above it,
+    /// like the old full-screen behaviour) instead of leaving the Dock
+    /// floating on top of the overlay (like Launchpad). Default off: the
+    /// Dock stays visible and clickable while the overlay is open.
+    var coverDock: Bool = false
 
     static let `default` = UserPreferences(
         hotKeyCode: 49,        // kVK_Space
@@ -151,10 +152,10 @@ struct UserPreferences: Codable, Equatable {
         case showHiddenInSearch
         case gridRows, gridColumns, iconSizeLevel, showAppNames
         case diagLoggingEnabled
-        case hideDockOnLaunch
+        case coverDock
     }
 
-    init(hotKeyCode: UInt32, hotKeyModifiers: UInt32, launchAtLogin: Bool, showMenuBarIcon: Bool, showDockIcon: Bool, backgroundBlur: Double, reduceMotion: Bool, showSystemApplications: Bool, overlayDisplayMode: OverlayDisplayMode, scanDirectories: [String], appIconStyle: AppIconStyle = .icon02, language: Language = .system, backgroundMode: BackgroundMode = .desktop, backgroundImages: [String] = [], autoCarousel: Bool = false, animateIcons: Bool = true, animatePageFlip: Bool = true, animateFolder: Bool = true, animateDrag: Bool = true, animateSearch: Bool = true, showHiddenInSearch: Bool = true, gridRows: Int = 4, gridColumns: Int = 7, iconSizeLevel: IconSizeLevel = .medium, showAppNames: Bool = true, diagLoggingEnabled: Bool = true, hideDockOnLaunch: Bool = true) {
+    init(hotKeyCode: UInt32, hotKeyModifiers: UInt32, launchAtLogin: Bool, showMenuBarIcon: Bool, showDockIcon: Bool, backgroundBlur: Double, reduceMotion: Bool, showSystemApplications: Bool, overlayDisplayMode: OverlayDisplayMode, scanDirectories: [String], appIconStyle: AppIconStyle = .icon02, language: Language = .system, backgroundMode: BackgroundMode = .desktop, backgroundImages: [String] = [], autoCarousel: Bool = false, animateIcons: Bool = true, animatePageFlip: Bool = true, animateFolder: Bool = true, animateDrag: Bool = true, animateSearch: Bool = true, showHiddenInSearch: Bool = true, gridRows: Int = 4, gridColumns: Int = 7, iconSizeLevel: IconSizeLevel = .medium, showAppNames: Bool = true, diagLoggingEnabled: Bool = true, coverDock: Bool = false) {
         self.hotKeyCode = hotKeyCode
         self.hotKeyModifiers = hotKeyModifiers
         self.launchAtLogin = launchAtLogin
@@ -181,7 +182,7 @@ struct UserPreferences: Codable, Equatable {
         self.iconSizeLevel = iconSizeLevel
         self.showAppNames = showAppNames
         self.diagLoggingEnabled = diagLoggingEnabled
-        self.hideDockOnLaunch = hideDockOnLaunch
+        self.coverDock = coverDock
     }
 
     init(from decoder: Decoder) throws {
@@ -212,6 +213,9 @@ struct UserPreferences: Codable, Equatable {
         iconSizeLevel = (try? c.decodeIfPresent(IconSizeLevel.self, forKey: .iconSizeLevel)) ?? .medium
         showAppNames = (try? c.decodeIfPresent(Bool.self, forKey: .showAppNames)) ?? true
         diagLoggingEnabled = (try? c.decodeIfPresent(Bool.self, forKey: .diagLoggingEnabled)) ?? true
-        hideDockOnLaunch = (try? c.decodeIfPresent(Bool.self, forKey: .hideDockOnLaunch)) ?? true
+        // Intentionally does NOT read the old `hideDockOnLaunch` key: every
+        // existing user has `true` saved there, but the product decision is
+        // that everyone gets the new Dock-visible behaviour after upgrading.
+        coverDock = (try? c.decodeIfPresent(Bool.self, forKey: .coverDock)) ?? false
     }
 }
