@@ -27,6 +27,24 @@ struct ContentView: View {
     /// Must match AppKit search chrome so results/grid never paint under it.
     private var searchChromeHeight: CGFloat { OverlaySearchChrome.chromeHeight }
 
+    /// Vertical space physically occupied by the Dock at the bottom of the
+    /// screen. The overlay window always spans the full screen frame (see
+    /// `OverlayWindowController.show()`), so when the Dock stays visible
+    /// (`coverDock == false`) it paints on top of whatever grid content sits
+    /// underneath it. `NSScreen.visibleFrame` already excludes that reserved
+    /// strip, so its origin gives us the Dock's height directly. When
+    /// `coverDock == true` the overlay renders above the Dock's window level
+    /// instead (the Dock is not visibly reserving space for us), so no
+    /// reservation is needed.
+    private var dockReservedHeight: CGFloat {
+        guard let screen = NSScreen.main else { return 0 }
+        return GridMetrics.dockReservedHeight(
+            coverDock: preferences.coverDock,
+            screenFrameMinY: screen.frame.minY,
+            visibleFrameMinY: screen.visibleFrame.minY
+        )
+    }
+
     var body: some View {
         GeometryReader { geo in
             ZStack {
@@ -44,7 +62,7 @@ struct ContentView: View {
                     contentBody
                         .frame(
                             width: geo.size.width,
-                            height: max(0, geo.size.height - searchChromeHeight)
+                            height: max(0, geo.size.height - searchChromeHeight - dockReservedHeight)
                         )
                         .clipped()
                 }

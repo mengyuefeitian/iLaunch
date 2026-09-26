@@ -57,6 +57,19 @@ enum GridMetrics {
         return (max(cellWidth, 60), max(cellHeight, 60))
     }
 
+    /// Vertical space the Dock physically occupies at the bottom of the
+    /// screen. The overlay window always spans the full screen frame, so
+    /// when the Dock stays visible on top of it (`coverDock == false`) the
+    /// grid must stop above that strip or its bottom row renders underneath
+    /// the Dock. `visibleFrame`'s origin already excludes that reserved
+    /// strip from `frame`'s origin, so their difference is the Dock height.
+    /// When `coverDock == true` the overlay renders above the Dock's window
+    /// level instead, so no reservation is needed.
+    static func dockReservedHeight(coverDock: Bool, screenFrameMinY: CGFloat, visibleFrameMinY: CGFloat) -> CGFloat {
+        guard !coverDock else { return 0 }
+        return max(0, visibleFrameMinY - screenFrameMinY)
+    }
+
     /// Exact 2×2 span of two adjacent app cells (uses the *live* tile metrics).
     static func enlargedSpan(
         tileWidth: CGFloat,

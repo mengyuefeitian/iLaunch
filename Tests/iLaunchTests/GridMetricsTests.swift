@@ -52,6 +52,17 @@ import Testing
     #expect(span.height == tileH * 2 + 34)
 }
 
+/// Dock-visible mode must reserve the Dock's screen-space strip so the grid
+/// stops above it instead of laying tiles out underneath it.
+@Test func dockReservedHeightMatchesVisibleFrameGap() {
+    // Dock at the bottom reserves 70pt: visibleFrame starts 70pt above frame.
+    #expect(GridMetrics.dockReservedHeight(coverDock: false, screenFrameMinY: 0, visibleFrameMinY: 70) == 70)
+    // Cover-Dock mode renders above the Dock's window level — no reservation.
+    #expect(GridMetrics.dockReservedHeight(coverDock: true, screenFrameMinY: 0, visibleFrameMinY: 70) == 0)
+    // No Dock reservation (e.g. auto-hidden) — visibleFrame matches frame.
+    #expect(GridMetrics.dockReservedHeight(coverDock: false, screenFrameMinY: 0, visibleFrameMinY: 0) == 0)
+}
+
 /// Visible chrome width = A-icon-left → B-icon-right, not full cell padding.
 @Test func enlargedChromeWidthMatchesIconPair() {
     let tileW: CGFloat = 160
