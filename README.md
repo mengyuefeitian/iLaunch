@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="Resources/iLaunch-icon-source.png" width="160" alt="iLaunch" />
+<img src="Resources/iLaunch-icon-default.png" width="160" alt="iLaunch" />
 
 # iLaunch
 
@@ -36,6 +36,10 @@ iLaunch 把这种体验带了回来——一个安静、全屏的网格，整理
 - **可配置全局热键** —— 默认 `⌥ Space`，可在设置中自定义；菜单栏与 Dock 亦可唤起。
 - **移到废纸篓 / 隐藏** —— 长按或右键移除或隐藏应用；启动应用后立即退出大屏，不卡顿。
 - **国际化** —— 支持系统语言以及中 / 英 / 日 / 韩 / 俄，运行时可切换。
+
+<div align="center">
+<img src="Resources/Screenshots/preview.png" width="800" alt="iLaunch 效果图" />
+</div>
 
 ## 最新版本 v1.8
 

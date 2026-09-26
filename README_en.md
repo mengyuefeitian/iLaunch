@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="Resources/iLaunch-icon-source.png" width="160" alt="iLaunch" />
+<img src="Resources/iLaunch-icon-default.png" width="160" alt="iLaunch" />
 
 # iLaunch
 
@@ -52,6 +52,10 @@ arrange once and rely on forever.
   launching an app dismisses the overlay immediately (no multi-second freeze).
 - **Internationalization** — System language plus Chinese / English / Japanese /  
   Korean / Russian, switchable at runtime.
+
+<div align="center">
+<img src="Resources/Screenshots/preview.png" width="800" alt="iLaunch preview" />
+</div>
 
 ## What's new in v1.8
 
