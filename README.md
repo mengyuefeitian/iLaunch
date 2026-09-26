@@ -37,6 +37,8 @@ iLaunch 把这种体验带了回来——一个安静、全屏的网格，整理
 - **移到废纸篓 / 隐藏** —— 长按或右键移除或隐藏应用；启动应用后立即退出大屏，不卡顿。
 - **国际化** —— 支持系统语言以及中 / 英 / 日 / 韩 / 俄，运行时可切换。
 
+
+## 效果展示
 <div align="center">
 <img src="Resources/Screenshots/preview.png" width="800" alt="iLaunch 效果图" />
 </div>
