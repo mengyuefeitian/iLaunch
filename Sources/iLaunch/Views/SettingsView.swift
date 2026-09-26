@@ -547,9 +547,15 @@ struct BackgroundThumbnail: View {
         ZStack(alignment: .topTrailing) {
             Group {
                 if let nsImage = NSImage(contentsOfFile: path) {
+                    // The grid cell is a wide rectangle (flexible column width,
+                    // fixed 64pt height), not a square — forcing aspectRatio(1)
+                    // coerced every photo into a square crop first and then
+                    // stretched that square to fit the rectangular cell,
+                    // squishing it. Using the image's own native ratio with
+                    // .fill covers the actual cell without distortion.
                     Image(nsImage: nsImage)
                         .resizable()
-                        .aspectRatio(1, contentMode: .fill)
+                        .aspectRatio(contentMode: .fill)
                 } else {
                     Rectangle()
                         .fill(Color.gray.opacity(0.3))
@@ -557,6 +563,7 @@ struct BackgroundThumbnail: View {
             }
             .frame(height: 64)
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .clipped()
 
             Button(action: onDelete) {
                 Image(systemName: "xmark.circle.fill")
