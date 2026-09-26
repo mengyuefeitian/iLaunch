@@ -53,6 +53,8 @@ arrange once and rely on forever.
 - **Internationalization** — System language plus Chinese / English / Japanese /  
   Korean / Russian, switchable at runtime.
 
+
+## Showcase
 <div align="center">
 <img src="Resources/Screenshots/preview.png" width="800" alt="iLaunch preview" />
 </div>
