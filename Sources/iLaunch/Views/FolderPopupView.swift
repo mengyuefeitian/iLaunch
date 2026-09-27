@@ -252,27 +252,7 @@ struct FolderPopupView: View {
         }
         .frame(width: panelWidth)
         .frame(maxHeight: max(120, estimatedPanelHeight))
-        .background(
-            Group {
-                if let wallpaperImage {
-                    Image(nsImage: wallpaperImage)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        // Static backdrop blur — only while fully mounted, not re-blurred
-                        // every animation frame of the shell.
-                        .blur(radius: 50)
-                        .overlay(Color.white.opacity(0.08))
-                } else {
-                    Rectangle().fill(.white.opacity(0.12))
-                }
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 32, style: .continuous)
-                .strokeBorder(.white.opacity(0.2), lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
+        .modifier(FolderPanelBackdrop(wallpaperImage: wallpaperImage))
     }
 
     private func playOpenAnimationIfNeeded() {
@@ -397,8 +377,12 @@ struct FolderPopupView: View {
                     .onChanged { value in
                         if leftFolder { return }
 
+                        // No DiagLog here: onChanged fires on every pixel of pointer
+                        // movement, and DiagLog.write does synchronous file I/O
+                        // (open/seek/write/close + a stat() for rotation) — logging
+                        // every pixel was the actual cause of dragging feeling
+                        // laggy/low-framerate inside an open folder.
                         let distance = hypot(value.translation.width, value.translation.height)
-                        DiagLog.write("folder drag onChanged distance=\(distance)")
                         guard distance >= 6 else { return }
 
                         // panelFrame is .zero until first layout — must not treat
@@ -519,6 +503,45 @@ struct FolderPopupView: View {
 
 extension Notification.Name {
     static let iLaunchFloatingDragMoved = Notification.Name("iLaunchFloatingDragMoved")
+}
+
+/// Opened-folder panel backdrop. On macOS 26+, real Liquid Glass — the system
+/// compositor blurs/refracts whatever is actually behind the panel in
+/// hardware, so it's both truer to the platform and cheaper per-frame than
+/// manually Gaussian-blurring a copy of the wallpaper image on the CPU/GPU
+/// side. Pre-26 keeps the original static wallpaper-blur look unchanged.
+private struct FolderPanelBackdrop: ViewModifier {
+    let wallpaperImage: NSImage?
+
+    func body(content: Content) -> some View {
+        if #available(macOS 26.0, *) {
+            content
+                .liquidGlass(cornerRadius: 32)
+        } else {
+            content
+                .background(
+                    Group {
+                        if let wallpaperImage {
+                            Image(nsImage: wallpaperImage)
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                // Static backdrop blur — only while fully mounted, not
+                                // re-blurred every animation frame of the shell.
+                                .blur(radius: 50)
+                                .overlay(Color.white.opacity(0.08))
+                        } else {
+                            Rectangle().fill(.white.opacity(0.12))
+                        }
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 32, style: .continuous)
+                        .strokeBorder(.white.opacity(0.2), lineWidth: 1)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
+        }
+    }
 }
 
 /// Deterministic random number generator seeded by a UInt64 value.

@@ -237,6 +237,17 @@ struct LaunchpadGridView: View {
                 .offset(dragTrans)
                 .opacity(tileOpacity(itemID: item.id, isBeingDragged: isBeingDragged))
         }
+        // Folder-create merge: the two source apps' ids disappear from the page
+        // and a new folder id appears at that slot in the same layout pass, so
+        // ForEach sees it as remove+insert. Without an explicit transition that
+        // reads as an instant cut; this makes it materialize/dissolve instead.
+        //
+        // This same ForEach (per-page) also sees a remove+insert for ordinary
+        // cross-page drag-reorder (ids move out of one page's array into
+        // another's) — not just folder creation — so the scale stays close to
+        // 1 (a gentle settle) rather than a dramatic pop, since it now has to
+        // read well for both cases.
+        .transition(.scale(scale: 0.75, anchor: .center).combined(with: .opacity))
         // zIndex on the Layout child so the dragged tile paints above folders
         // (not under them mid-drag).
         .zIndex(isBeingDragged ? 1000 : 0)

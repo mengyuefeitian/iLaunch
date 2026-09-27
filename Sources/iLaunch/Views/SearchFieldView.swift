@@ -31,14 +31,7 @@ struct SearchFieldView: View {
         .padding(.horizontal, 18)
         .padding(.vertical, 10)
         .frame(width: 420, height: 40)
-        .background(
-            Capsule(style: .continuous)
-                .fill(Color.black.opacity(0.55))
-        )
-        .overlay(
-            Capsule(style: .continuous)
-                .strokeBorder(Color.white.opacity(0.35), lineWidth: 1)
-        )
+        .liquidGlassCapsule(fallbackOpacity: 0.32)
         .shadow(color: .black.opacity(0.35), radius: 10, y: 2)
         .contentShape(Capsule())
     }

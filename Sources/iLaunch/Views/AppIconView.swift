@@ -66,13 +66,14 @@ struct AppIconView: View {
             // Folder-create sensing: frost plate under the target icon only.
             .background {
                 if showFolderCreatePreview {
-                    RoundedRectangle(cornerRadius: drawnIconSize * 0.22, style: .continuous)
-                        .fill(Color.white.opacity(0.14))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: drawnIconSize * 0.22, style: .continuous)
-                                .strokeBorder(Color.white.opacity(0.18), lineWidth: 1)
-                        )
+                    Color.clear
                         .frame(width: drawnIconSize * 1.22, height: drawnIconSize * 1.22)
+                        .liquidGlass(
+                            cornerRadius: drawnIconSize * 0.22,
+                            tint: .white,
+                            interactive: true,
+                            fallbackOpacity: 0.14
+                        )
                 }
             }
             .contentShape(Rectangle())
@@ -172,12 +173,8 @@ struct FolderTileView: View {
     private var gridSpacing: CGFloat { size * 0.035 }
 
     var body: some View {
-        RoundedRectangle(cornerRadius: size * 0.22, style: .continuous)
-            .fill(.white.opacity(0.14))
-            .overlay(
-                RoundedRectangle(cornerRadius: size * 0.22, style: .continuous)
-                    .strokeBorder(.white.opacity(0.18), lineWidth: 1)
-            )
+        Color.clear
+            .liquidGlass(cornerRadius: size * 0.22, fallbackOpacity: 0.14)
             .overlay(
                 Grid(horizontalSpacing: gridSpacing, verticalSpacing: gridSpacing) {
                     GridRow {
