@@ -110,7 +110,7 @@ struct EnlargedFolderTileView: View {
             .liquidGlass(
                 cornerRadius: min(28, chromeWidth * 0.1),
                 style: .clear,
-                tint: .black.opacity(0.28),
+                tint: .white.opacity(0.16),
                 fallbackOpacity: 0.14
             )
             .contentShape(Rectangle())

@@ -180,7 +180,7 @@ struct FolderTileView: View {
             .liquidGlass(
                 cornerRadius: size * 0.22,
                 style: .clear,
-                tint: .black.opacity(0.28),
+                tint: .white.opacity(0.16),
                 fallbackOpacity: 0.14
             )
             .overlay(
