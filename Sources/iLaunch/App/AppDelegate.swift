@@ -46,14 +46,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         hotKeyManager?.start(keyCode: prefs.hotKeyCode, modifiers: prefs.hotKeyModifiers)
         menuBarController = MenuBarController(overlay: overlay, hotKeyManager: hotKeyManager, updateService: updateService)
+        // Must run BEFORE overlay.show(), not after: the overlay window sits
+        // at a level above the Dock (or above the menu bar in cover-Dock
+        // mode) so both this alert and, if the user clicks through, System
+        // Settings itself would render behind the overlay and be
+        // unreachable — reported as the alert being "covered" with no way
+        // to click it. Presenting it first, while there's still just a
+        // normal-level window on screen, avoids the z-order conflict
+        // entirely. Only fires once per distinct app version (fresh install
+        // or post-update relaunch), never on every launch.
+        AppManagementPermissionPrompt.presentIfNeeded()
         // Launch straight into the full-screen launchpad overlay.
         overlay.show()
-        // Deferred so the overlay is already on screen before this modal
-        // alert can steal focus — only fires once per distinct app version
-        // (fresh install or post-update relaunch), never on every launch.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            AppManagementPermissionPrompt.presentIfNeeded()
-        }
     }
 
     /// Dock icon click: always open fullscreen launchpad.

@@ -36,12 +36,25 @@ enum AppManagementPermissionPrompt {
 
     @MainActor
     static func present() {
+        // NSAlert.runModal() only makes the alert modal *within this app* —
+        // it does not bring the app itself to the front. Launched via `open`
+        // or a relaunch, the app can otherwise sit in the background with an
+        // alert no one can see, which is indistinguishable from the overlay
+        // z-order bug this was meant to avoid in the first place.
+        NSApp.setActivationPolicy(.regular)
+        if #available(macOS 14.0, *) {
+            NSApp.activate()
+        } else {
+            NSApp.activate(ignoringOtherApps: true)
+        }
+
         let alert = NSAlert()
         alert.alertStyle = .informational
         alert.messageText = "需要在系统设置中授权 App 管理"
         alert.informativeText = "macOS 会在每次更新或重新安装 iLaunch 后重置「App 管理」权限。请前往「系统设置 > 隐私与安全 > App 管理」，允许 iLaunch 更新或删除其他应用程序，否则拖动应用到废纸篓将无法使用。"
         alert.addButton(withTitle: "打开系统设置")
         alert.addButton(withTitle: "稍后")
+        alert.window.level = .floating
         if alert.runModal() == .alertFirstButtonReturn {
             NSWorkspace.shared.open(appManagementURL)
         }
