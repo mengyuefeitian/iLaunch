@@ -66,11 +66,14 @@ struct AppIconView: View {
             // Folder-create sensing: frost plate under the target icon only.
             .background {
                 if showFolderCreatePreview {
+                    // No tint: an opaque .white tint saturates the glass to a
+                    // flat white card and kills the refraction/translucency
+                    // that actually reads as "glass" (matches the untinted
+                    // FolderTileView / search capsule, which do read as glass).
                     Color.clear
                         .frame(width: drawnIconSize * 1.22, height: drawnIconSize * 1.22)
                         .liquidGlass(
                             cornerRadius: drawnIconSize * 0.22,
-                            tint: .white,
                             interactive: true,
                             fallbackOpacity: 0.14
                         )
