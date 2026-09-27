@@ -1,10 +1,21 @@
 import SwiftUI
 
+/// Base Liquid Glass material. `.regular` is Apple's denser, more opaque
+/// style (meant for small controls that need contrast/legibility); `.clear`
+/// is the lighter, more transparent style — better for large surfaces like
+/// folder tiles/panels, where `.regular` reads as a flat, heavy gray plate
+/// instead of glass.
+enum LiquidGlassStyle {
+    case regular
+    case clear
+}
+
 /// Applies macOS 26 Liquid Glass to a view with a graceful fallback to
 /// material fills on earlier systems.
 struct LiquidGlassModifier<S: InsettableShape>: ViewModifier {
     var shape: S
     var cornerRadius: CGFloat = 24
+    var style: LiquidGlassStyle = .regular
     /// Tints the glass (e.g. a highlight while a drag hovers a drop target).
     var tint: Color? = nil
     /// Real Liquid Glass's pointer/touch-reactive highlight (macOS 26+ only;
@@ -16,7 +27,7 @@ struct LiquidGlassModifier<S: InsettableShape>: ViewModifier {
     /// `var`/`if let` mutation — build the `Glass` value here instead.
     @available(macOS 26.0, *)
     private func resolvedGlass() -> Glass {
-        var glass = Glass.regular
+        var glass: Glass = style == .clear ? .clear : .regular
         if let tint {
             glass = glass.tint(tint)
         }
@@ -49,6 +60,7 @@ extension View {
     /// Liquid Glass surface for rounded-rectangle containers (folders, popups).
     func liquidGlass(
         cornerRadius: CGFloat = 24,
+        style: LiquidGlassStyle = .regular,
         tint: Color? = nil,
         interactive: Bool = false,
         fallbackOpacity: Double = 0.16
@@ -56,6 +68,7 @@ extension View {
         modifier(LiquidGlassModifier(
             shape: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous),
             cornerRadius: cornerRadius,
+            style: style,
             tint: tint,
             interactive: interactive,
             fallbackOpacity: fallbackOpacity
@@ -63,9 +76,14 @@ extension View {
     }
 
     /// Liquid Glass surface for capsule shapes (search field).
-    func liquidGlassCapsule(tint: Color? = nil, fallbackOpacity: Double = 0.16) -> some View {
+    func liquidGlassCapsule(
+        style: LiquidGlassStyle = .regular,
+        tint: Color? = nil,
+        fallbackOpacity: Double = 0.16
+    ) -> some View {
         modifier(LiquidGlassModifier(
             shape: Capsule(),
+            style: style,
             tint: tint,
             fallbackOpacity: fallbackOpacity
         ))

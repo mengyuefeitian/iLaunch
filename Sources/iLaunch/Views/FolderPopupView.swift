@@ -516,7 +516,7 @@ private struct FolderPanelBackdrop: ViewModifier {
     func body(content: Content) -> some View {
         if #available(macOS 26.0, *) {
             content
-                .liquidGlass(cornerRadius: 32)
+                .liquidGlass(cornerRadius: 32, style: .clear)
         } else {
             content
                 .background(

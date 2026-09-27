@@ -177,7 +177,7 @@ struct FolderTileView: View {
 
     var body: some View {
         Color.clear
-            .liquidGlass(cornerRadius: size * 0.22, fallbackOpacity: 0.14)
+            .liquidGlass(cornerRadius: size * 0.22, style: .clear, fallbackOpacity: 0.14)
             .overlay(
                 Grid(horizontalSpacing: gridSpacing, verticalSpacing: gridSpacing) {
                     GridRow {

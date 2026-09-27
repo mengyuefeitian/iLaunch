@@ -107,7 +107,7 @@ struct EnlargedFolderTileView: View {
             .padding(contentPad)
             .frame(width: chromeWidth, height: chromeHeight)
             // Same surface as FolderTileView on the main grid.
-            .liquidGlass(cornerRadius: min(28, chromeWidth * 0.1), fallbackOpacity: 0.14)
+            .liquidGlass(cornerRadius: min(28, chromeWidth * 0.1), style: .clear, fallbackOpacity: 0.14)
             .contentShape(Rectangle())
             // Matches this contentShape, not the outer 2×2 layout slot below —
             // see TileActiveFramePreferenceKey doc for why first-click recovery
