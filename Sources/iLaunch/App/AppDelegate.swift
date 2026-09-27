@@ -48,6 +48,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menuBarController = MenuBarController(overlay: overlay, hotKeyManager: hotKeyManager, updateService: updateService)
         // Launch straight into the full-screen launchpad overlay.
         overlay.show()
+        // Deferred so the overlay is already on screen before this modal
+        // alert can steal focus — only fires once per distinct app version
+        // (fresh install or post-update relaunch), never on every launch.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            AppManagementPermissionPrompt.presentIfNeeded()
+        }
     }
 
     /// Dock icon click: always open fullscreen launchpad.
