@@ -54,7 +54,18 @@ enum AppManagementPermissionPrompt {
         alert.informativeText = "macOS 会在每次更新或重新安装 iLaunch 后重置「App 管理」权限。请前往「系统设置 > 隐私与安全 > App 管理」，允许 iLaunch 更新或删除其他应用程序，否则拖动应用到废纸篓将无法使用。"
         alert.addButton(withTitle: "打开系统设置")
         alert.addButton(withTitle: "稍后")
-        alert.window.level = .floating
+
+        // .floating (level 3) was not enough — confirmed live: a Terminal
+        // window and an already-open Finder window both still painted over
+        // it. Those are ordinary windows (level 0), so this points at some
+        // other already-open window's level, not a race — go as high as the
+        // overlay itself does (same trick OverlayPresentation uses to beat
+        // the Dock/menu bar), which is proven to reliably win on this app.
+        let window = alert.window
+        window.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.mainMenuWindow)) + 2)
+        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle]
+        window.orderFrontRegardless()
+
         if alert.runModal() == .alertFirstButtonReturn {
             NSWorkspace.shared.open(appManagementURL)
         }
