@@ -24,3 +24,9 @@ private func freshDefaults() -> UserDefaults {
     _ = AppManagementPermissionPrompt.shouldPresent(currentVersion: "1.9.9", defaults: defaults)
     #expect(AppManagementPermissionPrompt.shouldPresent(currentVersion: "1.9.10", defaults: defaults) == true)
 }
+
+@Test func alertTextExplainsLastRegrantAndRemoveReaddStep() {
+    let text = AppManagementPermissionPrompt.informativeText
+    #expect(text.contains("最后一次"))
+    #expect(text.contains("移除"))
+}

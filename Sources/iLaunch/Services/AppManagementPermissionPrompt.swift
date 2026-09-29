@@ -1,15 +1,20 @@
 import AppKit
 
 /// Guides the user back to Settings > Privacy & Security > App Management
-/// after a fresh install or an auto-update.
+/// after a fresh install or an update.
 ///
-/// The app is ad-hoc signed (no paid Developer ID certificate), so its code
-/// signature is different on every build. macOS's TCC privacy database keys
-/// the "App Management" grant (required for moving other apps to the Trash)
-/// off a stable Team ID in the signature — without one, every reinstall or
-/// Sparkle update looks like a brand-new app to TCC, and the grant is reset.
-/// There is no code-level fix for that (see the Developer ID discussion);
-/// this only makes the now-mandatory manual re-grant easier to find.
+/// TCC stores each grant together with the app's designated requirement.
+/// An ad-hoc signature (`codesign --sign -`) yields `cdhash H"..."`, which
+/// changes on every build, so every update used to look like a new app and
+/// the grant was reset. Builds are now signed with a stable self-signed
+/// identity ("iLaunch Local Signing"), giving the requirement
+/// `identifier "com.ilaunch.iLaunch" and certificate leaf = H"..."`, which
+/// stays constant across builds (see docs/codesigning.md).
+///
+/// The first release under that identity is a one-time migration: the stored
+/// old cdhash requirement can never match, so the user must re-grant once.
+/// The per-version gating below still prompts on every version change; it is
+/// cheap, and covers fresh installs too.
 enum AppManagementPermissionPrompt {
     private static let lastSeenVersionKey = "iLaunchLastSeenVersionForPermissionPrompt"
     private static let appManagementURL = URL(
@@ -34,6 +39,9 @@ enum AppManagementPermissionPrompt {
         present()
     }
 
+    /// One-time migration wording: this is the last manual re-grant.
+    static let informativeText = "iLaunch 已改用固定的签名身份，这是最后一次需要重新授权：此后更新将保留「App 管理」权限。请前往「系统设置 > 隐私与安全 > App 管理」，如果列表中已有旧的 iLaunch，请先点「−」移除，再重新添加并开启 iLaunch（仅切换开关不会刷新旧记录），否则拖动应用到废纸篓将无法使用。"
+
     @MainActor
     static func present() {
         // NSAlert.runModal() only makes the alert modal *within this app* —
@@ -51,7 +59,7 @@ enum AppManagementPermissionPrompt {
         let alert = NSAlert()
         alert.alertStyle = .informational
         alert.messageText = "需要在系统设置中授权 App 管理"
-        alert.informativeText = "macOS 会在每次更新或重新安装 iLaunch 后重置「App 管理」权限。请前往「系统设置 > 隐私与安全 > App 管理」，允许 iLaunch 更新或删除其他应用程序，否则拖动应用到废纸篓将无法使用。"
+        alert.informativeText = informativeText
         alert.addButton(withTitle: "打开系统设置")
         alert.addButton(withTitle: "稍后")
 

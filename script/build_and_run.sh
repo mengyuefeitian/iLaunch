@@ -12,6 +12,11 @@ APP_NAME="iLaunch"
 BUNDLE_ID="com.ilaunch.iLaunch"
 MIN_SYSTEM_VERSION="14.0"
 
+# Stable self-signed identity (see docs/codesigning.md). Ad-hoc signing (`-`)
+# gives every build a new cdhash-based designated requirement, which makes
+# macOS TCC reset the App Management / Accessibility grants on every update.
+SIGN_IDENTITY="${SIGN_IDENTITY:-iLaunch Local Signing}"
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST_DIR="$ROOT_DIR/dist"
 APP_BUNDLE="$DIST_DIR/$APP_NAME.app"
@@ -85,9 +90,9 @@ cat >"$INFO_PLIST" <<PLIST
   <key>CFBundleName</key>
   <string>$APP_NAME</string>
   <key>CFBundleShortVersionString</key>
-  <string>1.9.13</string>
+  <string>1.9.14</string>
   <key>CFBundleVersion</key>
-  <string>1.9.13</string>
+  <string>1.9.14</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>LSMinimumSystemVersion</key>
@@ -106,8 +111,41 @@ cat >"$INFO_PLIST" <<PLIST
 </plist>
 PLIST
 
-# Ad-hoc sign the bundle for local distribution (no Developer ID / notarization).
-codesign --force --deep --sign - "$APP_BUNDLE"
+# Sign inside-out with the stable local identity so the designated requirement
+# is `identifier "$BUNDLE_ID" and certificate leaf = H"..."` on every build.
+if [ "$SIGN_IDENTITY" != "-" ] && ! security find-identity -v -p codesigning | grep -Fq "\"$SIGN_IDENTITY\""; then
+  echo "error: code-signing identity \"$SIGN_IDENTITY\" not found in the keychain." >&2
+  echo "       Signing ad-hoc would reset users' App Management grant on every update." >&2
+  echo "       Recreate it per docs/codesigning.md, or set SIGN_IDENTITY=- to force ad-hoc." >&2
+  exit 1
+fi
+
+sign_path() {
+  codesign --force --sign "$SIGN_IDENTITY" "$1"
+}
+
+SPARKLE_B="$APP_FRAMEWORKS/Sparkle.framework/Versions/B"
+for item in \
+  "$SPARKLE_B/XPCServices/Installer.xpc" \
+  "$SPARKLE_B/XPCServices/Downloader.xpc" \
+  "$SPARKLE_B/Autoupdate" \
+  "$SPARKLE_B/Updater.app" \
+  "$APP_FRAMEWORKS/Sparkle.framework"; do
+  [ -e "$item" ] && sign_path "$item"
+done
+sign_path "$APP_BUNDLE"
+
+verify_signature() {
+  codesign --verify --deep --strict "$APP_BUNDLE"
+  if [ "$SIGN_IDENTITY" != "-" ]; then
+    if ! codesign -dr - "$APP_BUNDLE" 2>&1 | grep -q "certificate leaf"; then
+      echo "error: designated requirement lacks 'certificate leaf' — grants would not survive updates:" >&2
+      codesign -dr - "$APP_BUNDLE" >&2 || true
+      exit 1
+    fi
+  fi
+}
+verify_signature
 
 # Kills any iLaunch process by name right before (re)launching one of
 # our own — only called from modes below that are about to open a new
@@ -150,7 +188,7 @@ case "$MODE" in
     # checksum in package_dmg.sh already verify everything this needs to:
     # confirm the binary exists, is executable, and is signed — no GUI.
     [ -x "$APP_BINARY" ] || { echo "missing or non-executable binary: $APP_BINARY" >&2; exit 1; }
-    codesign --verify "$APP_BUNDLE"
+    verify_signature
     echo "verify OK: $APP_BUNDLE"
     ;;
   *)
