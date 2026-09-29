@@ -34,3 +34,19 @@ import Testing
     }.value
     #expect(result == "fallback")
 }
+
+@MainActor
+@Test func permissionSectionKeysExistInEveryLanguage() {
+    let keys = [
+        "settings.permissions", "settings.appManagementPermission", "settings.permissionGranted",
+        "settings.permissionDenied", "settings.permissionUnknown", "settings.permissionChecking",
+        "settings.openSystemSettings", "settings.permissionRefresh", "settings.permissionHelp",
+        "settings.permissionDeniedNote",
+    ]
+    let blocks = [Localizer.enStrings, Localizer.zhStrings, Localizer.jaStrings, Localizer.koStrings, Localizer.ruStrings]
+    for block in blocks {
+        for key in keys {
+            #expect(block[key]?.isEmpty == false, "missing \(key)")
+        }
+    }
+}

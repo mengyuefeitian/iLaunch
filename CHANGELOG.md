@@ -1,3 +1,14 @@
+## 1.9.15 - 2026-09-29
+
+### Features
+- Settings > App Management now starts with a "Permissions" section showing whether the App Management permission (needed to drag apps to the Trash) is granted, with a button to open System Settings and a re-check control. It refreshes automatically when you come back from System Settings.
+
+### Changes
+- At launch, the permission reminder is skipped when the permission is already granted.
+
+### Fixes
+- Choosing "Open System Settings" in the launch reminder no longer immediately covers System Settings with the full-screen overlay; the overlay stays closed until you open it via the Dock, menu bar or hotkey.
+
 ## 1.9.0 - 2026-09-11
 
 ### Features

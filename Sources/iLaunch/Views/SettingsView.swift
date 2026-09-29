@@ -329,8 +329,33 @@ struct AppManagementSettingsView: View {
     weak var viewModel: LaunchpadViewModel?
     let onSave: () -> Void
 
+    /// nil while a probe is in flight.
+    @State private var permissionStatus: PermissionStatus?
+
+    private func refreshPermissionStatus() async {
+        permissionStatus = nil
+        permissionStatus = await AppManagementPermissionChecker().check(timeout: 3)
+    }
+
     var body: some View {
         Form {
+            Section(Localizer.t("settings.permissions")) {
+                PermissionStatusRow(
+                    title: Localizer.t("settings.appManagementPermission"),
+                    status: permissionStatus,
+                    systemSettingsURL: AppManagementPermissionChecker.systemSettingsURL,
+                    onRefresh: { Task { await refreshPermissionStatus() } }
+                )
+                Text(Localizer.t("settings.permissionHelp"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                if case .denied = permissionStatus {
+                    Text(Localizer.t("settings.permissionDeniedNote"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
             Section(Localizer.t("settings.systemApps")) {
                 Toggle(Localizer.t("settings.showSystemApps"), isOn: $preferences.showSystemApplications)
             }
@@ -358,6 +383,10 @@ struct AppManagementSettingsView: View {
             }
         }
         .formStyle(.grouped)
+        .task { await refreshPermissionStatus() }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            Task { await refreshPermissionStatus() }
+        }
         .onChange(of: preferences.showSystemApplications) { _, newValue in
             DiagLog.write("showSystemApplications toggled to \(newValue), viewModel is \(viewModel == nil ? "nil" : "valid")")
             viewModel?.showSystemApplications = newValue
@@ -368,6 +397,68 @@ struct AppManagementSettingsView: View {
             viewModel?.showHiddenInSearch = newValue
             onSave()
         }
+    }
+}
+
+/// One permission's status: icon + label + status text, an "open System
+/// Settings" button whenever it isn't granted, and a manual re-check button.
+private struct PermissionStatusRow: View {
+    let title: String
+    /// nil while checking.
+    let status: PermissionStatus?
+    let systemSettingsURL: URL
+    let onRefresh: () -> Void
+
+    var body: some View {
+        HStack {
+            Label(title, systemImage: iconName)
+                .foregroundStyle(iconColor)
+            Spacer()
+            Text(statusText)
+                .foregroundStyle(.secondary)
+            if status != nil, status != .granted {
+                Button(Localizer.t("settings.openSystemSettings")) {
+                    NSWorkspace.shared.open(systemSettingsURL)
+                }
+                .help(helpText)
+            }
+            Button(action: onRefresh) {
+                Image(systemName: "arrow.clockwise")
+            }
+            .buttonStyle(.borderless)
+            .help(Localizer.t("settings.permissionRefresh"))
+            .disabled(status == nil)
+        }
+    }
+
+    private var iconName: String {
+        switch status {
+        case .granted: "checkmark.circle.fill"
+        case .denied: "xmark.circle.fill"
+        case .unknown, nil: "questionmark.circle"
+        }
+    }
+
+    private var iconColor: Color {
+        switch status {
+        case .granted: .green
+        case .denied: .red
+        case .unknown, nil: .secondary
+        }
+    }
+
+    private var statusText: String {
+        switch status {
+        case .granted: Localizer.t("settings.permissionGranted")
+        case .denied: Localizer.t("settings.permissionDenied")
+        case .unknown: Localizer.t("settings.permissionUnknown")
+        case nil: Localizer.t("settings.permissionChecking")
+        }
+    }
+
+    private var helpText: String {
+        if case .denied(let message) = status { return message }
+        return Localizer.t("settings.permissionUnknown")
     }
 }
 

@@ -17,9 +17,25 @@ import AppKit
 /// cheap, and covers fresh installs too.
 enum AppManagementPermissionPrompt {
     private static let lastSeenVersionKey = "iLaunchLastSeenVersionForPermissionPrompt"
-    private static let appManagementURL = URL(
-        string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AppBundles"
-    )!
+
+    /// What happened at launch, so the caller can decide about the overlay.
+    enum Result: Equatable {
+        case notShown
+        case dismissed
+        case openedSystemSettings
+    }
+
+    /// The full-screen overlay sits above the Dock/menu bar, so showing it
+    /// right after the user opened System Settings would cover the very
+    /// window they just asked for.
+    static func shouldShowOverlay(after result: Result) -> Bool {
+        result != .openedSystemSettings
+    }
+
+    /// An already-granted permission needs no reminder.
+    static func shouldShowAlert(status: PermissionStatus) -> Bool {
+        status != .granted
+    }
 
     /// True exactly once per distinct `CFBundleShortVersionString` — covers
     /// both a fresh install (no stored value yet) and every subsequent
@@ -33,17 +49,40 @@ enum AppManagementPermissionPrompt {
     }
 
     @MainActor
-    static func presentIfNeeded(bundle: Bundle = .main, defaults: UserDefaults = .standard) {
-        guard let currentVersion = bundle.infoDictionary?["CFBundleShortVersionString"] as? String,
-              shouldPresent(currentVersion: currentVersion, defaults: defaults) else { return }
-        present()
+    static func presentIfNeeded(bundle: Bundle = .main, defaults: UserDefaults = .standard) async -> Result {
+        guard let currentVersion = bundle.infoDictionary?["CFBundleShortVersionString"] as? String else {
+            return .notShown
+        }
+        return await presentIfNeeded(
+            currentVersion: currentVersion,
+            defaults: defaults,
+            probe: { await AppManagementPermissionChecker().check(timeout: probeTimeout) },
+            presenter: present
+        )
+    }
+
+    /// Bounded so a slow probe can never noticeably delay showing the overlay.
+    static let probeTimeout: TimeInterval = 1.0
+
+    @MainActor
+    static func presentIfNeeded(
+        currentVersion: String,
+        defaults: UserDefaults,
+        probe: () async -> PermissionStatus,
+        presenter: () -> Result
+    ) async -> Result {
+        guard shouldPresent(currentVersion: currentVersion, defaults: defaults) else { return .notShown }
+        let status = await probe()
+        DiagLog.write("appManagement prompt: probe status=\(status)")
+        guard shouldShowAlert(status: status) else { return .notShown }
+        return presenter()
     }
 
     /// One-time migration wording: this is the last manual re-grant.
     static let informativeText = "iLaunch 已改用固定的签名身份，这是最后一次需要重新授权：此后更新将保留「App 管理」权限。请前往「系统设置 > 隐私与安全 > App 管理」，如果列表中已有旧的 iLaunch，请先点「−」移除，再重新添加并开启 iLaunch（仅切换开关不会刷新旧记录），否则拖动应用到废纸篓将无法使用。"
 
     @MainActor
-    static func present() {
+    static func present() -> Result {
         // NSAlert.runModal() only makes the alert modal *within this app* —
         // it does not bring the app itself to the front. Launched via `open`
         // or a relaunch, the app can otherwise sit in the background with an
@@ -74,8 +113,12 @@ enum AppManagementPermissionPrompt {
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle]
         window.orderFrontRegardless()
 
+        // Deliberately no NSApp.activate after opening the URL: the user
+        // is being sent to System Settings and must be left there.
         if alert.runModal() == .alertFirstButtonReturn {
-            NSWorkspace.shared.open(appManagementURL)
+            NSWorkspace.shared.open(AppManagementPermissionChecker.systemSettingsURL)
+            return .openedSystemSettings
         }
+        return .dismissed
     }
 }

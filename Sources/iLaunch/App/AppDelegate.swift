@@ -55,9 +55,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // normal-level window on screen, avoids the z-order conflict
         // entirely. Only fires once per distinct app version (fresh install
         // or post-update relaunch), never on every launch.
-        AppManagementPermissionPrompt.presentIfNeeded()
-        // Launch straight into the full-screen launchpad overlay.
-        overlay.show()
+        // If the user chose "open System Settings", the overlay stays hidden
+        // so it doesn't cover that window; it opens later via Dock click,
+        // menu bar or hotkey as usual.
+        Task { @MainActor [overlay] in
+            let result = await AppManagementPermissionPrompt.presentIfNeeded()
+            // Launch straight into the full-screen launchpad overlay.
+            if AppManagementPermissionPrompt.shouldShowOverlay(after: result) {
+                overlay.show()
+            }
+        }
     }
 
     /// Dock icon click: always open fullscreen launchpad.
