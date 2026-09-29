@@ -79,7 +79,7 @@ enum AppManagementPermissionPrompt {
     }
 
     /// One-time migration wording: this is the last manual re-grant.
-    static let informativeText = "iLaunch 已改用固定的签名身份，这是最后一次需要重新授权：此后更新将保留「App 管理」权限。请前往「系统设置 > 隐私与安全 > App 管理」，如果列表中已有旧的 iLaunch，请先点「−」移除，再重新添加并开启 iLaunch（仅切换开关不会刷新旧记录），否则拖动应用到废纸篓将无法使用。"
+    static let informativeText = "iLaunch 已改用固定的签名身份，这是最后一次需要重新授权：此后更新将保留「App 管理」权限。macOS 不会自动把 iLaunch 列入该列表，需要手动添加：打开「系统设置 > 隐私与安全性 > App 管理」，点击「+」，选择 /Applications/iLaunch.app（如果列表中已有旧的 iLaunch，请先点「−」移除），然后开启开关。否则拖动应用到废纸篓将无法使用。"
 
     @MainActor
     static func present() -> Result {

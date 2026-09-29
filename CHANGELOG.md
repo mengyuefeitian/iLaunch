@@ -1,3 +1,10 @@
+## 1.9.16 - 2026-09-29
+
+### Fixes
+- The App Management permission status no longer wrongly shows "Granted": it is now read directly from the system permission database instead of a file-open probe that always succeeded, so the launch reminder is no longer skipped when the permission is missing.
+- Failed "move to Trash" attempts are now written to the diagnostic log (path, error details and permission status).
+- The permission guidance now explains that macOS does not list iLaunch automatically and it must be added manually with (+).
+
 ## 1.9.15 - 2026-09-29
 
 ### Features

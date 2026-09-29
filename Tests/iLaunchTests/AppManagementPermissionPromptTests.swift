@@ -29,6 +29,8 @@ private func freshDefaults() -> UserDefaults {
     let text = AppManagementPermissionPrompt.informativeText
     #expect(text.contains("最后一次"))
     #expect(text.contains("移除"))
+    #expect(text.contains("「+」"))
+    #expect(text.contains("/Applications/iLaunch.app"))
 }
 
 // MARK: - Launch decision / overlay rule

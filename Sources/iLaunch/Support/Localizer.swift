@@ -73,7 +73,7 @@ struct Localizer {
         "settings.permissionChecking": "Checking…",
         "settings.openSystemSettings": "Open System Settings",
         "settings.permissionRefresh": "Re-check",
-        "settings.permissionHelp": "Lets iLaunch move apps to the Trash when you drag them there. Grant it in System Settings > Privacy & Security > App Management.",
+        "settings.permissionHelp": "Lets iLaunch move apps to the Trash when you drag them there. macOS does not list iLaunch automatically: open System Settings > Privacy & Security > App Management, click (+), choose /Applications/iLaunch.app (remove any old iLaunch entry first with (−)), then turn it on. This status refreshes automatically when you return to the app.",
         "settings.permissionDeniedNote": "If an old iLaunch entry already exists in the list, remove it with (−) and add iLaunch again; just toggling the switch won't refresh it.",
         // Settings sections
         "settings.launch": "Launch",
@@ -192,7 +192,7 @@ struct Localizer {
         "settings.permissionChecking": "检测中…",
         "settings.openSystemSettings": "打开系统设置",
         "settings.permissionRefresh": "重新检测",
-        "settings.permissionHelp": "用于把应用拖到废纸篓时卸载它。请在「系统设置 > 隐私与安全 > App 管理」中授权。",
+        "settings.permissionHelp": "用于把应用拖到废纸篓时卸载它。macOS 不会自动列出 iLaunch，需手动添加：打开「系统设置 > 隐私与安全性 > App 管理」，点击「+」，选择 /Applications/iLaunch.app（如有旧的 iLaunch 条目，请先点「−」移除），然后开启开关。返回本应用后此状态会自动刷新。",
         "settings.permissionDeniedNote": "如果列表中已有旧的 iLaunch，请先点「−」移除，再重新添加；仅切换开关不会刷新旧记录。",
         // Settings sections
         "settings.launch": "启动",
@@ -311,7 +311,7 @@ struct Localizer {
         "settings.permissionChecking": "確認中…",
         "settings.openSystemSettings": "システム設定を開く",
         "settings.permissionRefresh": "再確認",
-        "settings.permissionHelp": "アプリをゴミ箱へドラッグして削除するために必要です。「システム設定 > プライバシーとセキュリティ > App 管理」で許可してください。",
+        "settings.permissionHelp": "アプリをゴミ箱へドラッグして削除するために必要です。macOS は iLaunch を自動では一覧に表示しません。「システム設定 > プライバシーとセキュリティ > App 管理」を開き、「+」をクリックして /Applications/iLaunch.app を選択し（古い iLaunch があれば先に「−」で削除）、スイッチをオンにしてください。アプリに戻ると、この状態は自動的に更新されます。",
         "settings.permissionDeniedNote": "一覧に古い iLaunch がある場合は、「−」で削除してから追加し直してください。スイッチを切り替えるだけでは更新されません。",
         // Settings sections
         "settings.launch": "起動",
@@ -430,7 +430,7 @@ struct Localizer {
         "settings.permissionChecking": "확인 중…",
         "settings.openSystemSettings": "시스템 설정 열기",
         "settings.permissionRefresh": "다시 확인",
-        "settings.permissionHelp": "앱을 휴지통으로 드래그해 삭제하는 데 필요합니다. 「시스템 설정 > 개인정보 보호 및 보안 > App 관리」에서 허용해 주세요.",
+        "settings.permissionHelp": "앱을 휴지통으로 드래그해 삭제하는 데 필요합니다. macOS는 iLaunch를 목록에 자동으로 추가하지 않습니다. 「시스템 설정 > 개인정보 보호 및 보안 > App 관리」를 열고 「+」를 클릭해 /Applications/iLaunch.app을 선택한 다음(이전 iLaunch 항목이 있으면 먼저 「−」로 제거) 스위치를 켜세요. 앱으로 돌아오면 이 상태가 자동으로 갱신됩니다.",
         "settings.permissionDeniedNote": "목록에 이전 iLaunch 항목이 있으면 「−」로 제거한 뒤 다시 추가하세요. 스위치만 전환해서는 갱신되지 않습니다.",
         // Settings sections
         "settings.launch": "실행",
@@ -549,7 +549,7 @@ struct Localizer {
         "settings.permissionChecking": "Проверка…",
         "settings.openSystemSettings": "Открыть Системные настройки",
         "settings.permissionRefresh": "Проверить снова",
-        "settings.permissionHelp": "Нужно, чтобы iLaunch мог переносить приложения в Корзину при перетаскивании. Разрешите в Системных настройках > Конфиденциальность и безопасность > Управление приложениями.",
+        "settings.permissionHelp": "Нужно, чтобы iLaunch мог переносить приложения в Корзину при перетаскивании. macOS не добавляет iLaunch в список автоматически: откройте Системные настройки > Конфиденциальность и безопасность > Управление приложениями, нажмите (+), выберите /Applications/iLaunch.app (старую запись iLaunch сначала удалите кнопкой (−)) и включите переключатель. Статус обновится автоматически при возврате в приложение.",
         "settings.permissionDeniedNote": "Если в списке уже есть старая запись iLaunch, удалите её кнопкой (−) и добавьте iLaunch заново; простое переключение не обновит запись.",
         // Settings sections
         "settings.launch": "Запуск",

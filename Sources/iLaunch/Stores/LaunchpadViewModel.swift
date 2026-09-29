@@ -477,7 +477,11 @@ final class LaunchpadViewModel {
     func moveToTrash(_ itemID: String) async {
         guard let record = appIndex.records[itemID] else { return }
         let success = await trasher.moveToTrash(path: record.path)
-        guard success else { return }
+        guard success else {
+            let status = await AppManagementPermissionChecker().check(timeout: 1)
+            DiagLog.write("moveToTrash: not removed from grid, path=\(record.path) appManagement status=\(status)")
+            return
+        }
         layoutStore.removeAppEverywhere(record.id)
         persistLayout()
     }
