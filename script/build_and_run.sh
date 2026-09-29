@@ -90,9 +90,9 @@ cat >"$INFO_PLIST" <<PLIST
   <key>CFBundleName</key>
   <string>$APP_NAME</string>
   <key>CFBundleShortVersionString</key>
-  <string>1.9.16</string>
+  <string>1.9.17</string>
   <key>CFBundleVersion</key>
-  <string>1.9.16</string>
+  <string>1.9.17</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>LSMinimumSystemVersion</key>
@@ -105,6 +105,8 @@ cat >"$INFO_PLIST" <<PLIST
   <true/>
   <key>SUScheduledCheckInterval</key>
   <integer>86400</integer>
+  <key>NSAppleEventsUsageDescription</key>
+  <string>iLaunch 需要控制 Finder，以便把需要管理员权限的应用移到废纸篓。</string>
   <key>NSPrincipalClass</key>
   <string>NSApplication</string>
 </dict>

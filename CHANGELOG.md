@@ -1,3 +1,9 @@
+## 1.9.17 - 2026-09-29
+
+### Fixes
+- Trashing root-owned apps (about a third of /Applications, e.g. apps installed by a package) no longer silently fails: when macOS refuses with a permission error, iLaunch now asks Finder to move the app to the Trash, which shows the usual administrator-password prompt. macOS may ask once to allow iLaunch to control Finder.
+- If trashing still fails (password cancelled or Finder control denied), the reason is written to the diagnostic log.
+
 ## 1.9.16 - 2026-09-29
 
 ### Fixes
