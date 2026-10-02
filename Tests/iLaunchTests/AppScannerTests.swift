@@ -197,3 +197,42 @@ private func makeSyntheticApp(name: String, bundleName: String) throws -> URL {
     """.data(using: .utf8)!.write(to: plist)
     return root
 }
+
+@Test func scannerFollowsSymlinkedAppBundle() throws {
+    // Mirrors /Applications/Safari.app -> ../System/Cryptexes/App/.../Safari.app
+    let outside = try makeSyntheticApp(name: "Example", bundleName: "Example")
+    let scanned = FileManager.default.temporaryDirectory
+        .appendingPathComponent(UUID().uuidString, isDirectory: true)
+    try FileManager.default.createDirectory(at: scanned, withIntermediateDirectories: true)
+    let link = scanned.appendingPathComponent("Example.app")
+    try FileManager.default.createSymbolicLink(
+        at: link,
+        withDestinationURL: outside.appendingPathComponent("Example.app")
+    )
+
+    let scanner = AppScanner(finderNameProvider: { _ in nil })
+    let records = scanner.scan(directories: [scanned], now: Date(timeIntervalSince1970: 20))
+
+    #expect(records.count == 1)
+    #expect(records.first?.name == "Example")
+    // Path stays under the scanned directory (not the symlink target).
+    #expect(records.first?.path.hasSuffix("\(scanned.lastPathComponent)/Example.app") == true)
+}
+
+@Test func scannerFollowsSymlinkedFolderOfApps() throws {
+    let outside = try makeSyntheticApp(name: "One", bundleName: "One")
+    try makeSyntheticApp(named: "Two", bundleID: "com.example.Two", in: outside)
+    let scanned = FileManager.default.temporaryDirectory
+        .appendingPathComponent(UUID().uuidString, isDirectory: true)
+    try FileManager.default.createDirectory(at: scanned, withIntermediateDirectories: true)
+    try FileManager.default.createSymbolicLink(
+        at: scanned.appendingPathComponent("Suite"),
+        withDestinationURL: outside
+    )
+
+    let scanner = AppScanner(finderNameProvider: { _ in nil })
+    let result = scanner.scanAll(directories: [scanned], now: Date(timeIntervalSince1970: 20))
+
+    #expect(result.records.count == 2)
+    #expect(result.directoryFolders.count == 1)
+}

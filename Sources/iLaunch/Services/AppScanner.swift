@@ -158,7 +158,11 @@ struct AppScanner {
         }
 
         for entry in entries {
-            let isDirectory = (try? entry.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false
+            // Resolve symlinks first: /Applications/Safari.app is a symlink
+            // into the cryptex volume, and `.isDirectoryKey` is false for a
+            // symlink even when it points at a directory.
+            let resolved = entry.resolvingSymlinksInPath()
+            let isDirectory = (try? resolved.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false
             guard isDirectory else { continue }
 
             if entry.pathExtension == "app" {
@@ -168,9 +172,13 @@ struct AppScanner {
             } else {
                 var memberPaths: [String] = []
                 let subtreeFailures = FailureCollector()
-                if let enumerator = enumeratorReportingFailures(at: entry, into: subtreeFailures) {
+                // Enumerate the resolved directory (the enumerator does not
+                // follow a symlinked root) but keep reporting paths under the
+                // entry the user sees.
+                if let enumerator = enumeratorReportingFailures(at: resolved, into: subtreeFailures) {
                     for item in enumerator {
-                        guard let url = item as? URL, url.pathExtension == "app" else { continue }
+                        guard let found = item as? URL, found.pathExtension == "app" else { continue }
+                        let url = rebase(found, from: resolved, to: entry)
                         if let record = record(for: url, now: now) {
                             collected.append(record)
                             memberPaths.append(url.path)
@@ -186,6 +194,15 @@ struct AppScanner {
                 }
             }
         }
+    }
+
+    /// Re-roots `url` (found beneath `root`) so it lives under `newRoot`.
+    private func rebase(_ url: URL, from root: URL, to newRoot: URL) -> URL {
+        guard root != newRoot else { return url }
+        let rootPath = root.path
+        guard url.path.hasPrefix(rootPath + "/") else { return url }
+        let relative = String(url.path.dropFirst(rootPath.count + 1))
+        return newRoot.appendingPathComponent(relative, isDirectory: true)
     }
 
     /// Wraps `FileManager.enumerator(at:)` with an `errorHandler` so a
