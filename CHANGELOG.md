@@ -1,3 +1,12 @@
+## 1.11.0 - 2026-10-02
+
+### Features
+- Folders can now be dissolved: right-click a folder (or the open folder panel) and choose "Dissolve folder". Its apps return to the grid in order at the folder's position, spilling onto following pages when the page is full. The built-in Apple folder cannot be dissolved.
+- New setting, Settings > Interface > Layout > "Remember last page" (on by default): reopening the launcher returns to the page you left from. A full quit and relaunch still starts on the first page.
+
+### Fixes
+- The folder popup no longer shows a useless scrollbar when everything fits, and when it does scroll the scrollbar stays inside the rounded panel instead of running into the bottom corners.
+
 ## 1.9.17 - 2026-09-29
 
 ### Fixes
