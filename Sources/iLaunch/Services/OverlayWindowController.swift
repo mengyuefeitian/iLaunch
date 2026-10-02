@@ -213,9 +213,11 @@ final class OverlayWindowController {
         container.addSubview(hosting)
         self.hostingView = hosting
 
-        searchChrome.install(on: container) { [weak self] text in
+        searchChrome.install(on: container, onTextChange: { [weak self] text in
             self?.viewModel.searchText = text
-        }
+        }, onSubmit: { [weak self] in
+            self?.launchFirstSearchResult()
+        })
         searchChrome.setText("")
 
         window.contentView = container
@@ -766,6 +768,17 @@ final class OverlayWindowController {
             overlay.makeKeyAndOrderFront(nil)
             self.searchChrome.interpretKeyEvent(event)
             return nil
+        }
+    }
+
+    /// Return in the search field: launch the top result like a tap would
+    /// (instant dismiss first, launch on the next main turn).
+    private func launchFirstSearchResult() {
+        guard let record = viewModel.firstLaunchableSearchResult() else { return }
+        viewModel.finishClosingFolder()
+        hide()
+        DispatchQueue.main.async {
+            _ = AppLauncher().launch(record)
         }
     }
 

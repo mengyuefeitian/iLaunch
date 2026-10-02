@@ -101,6 +101,7 @@ final class OverlaySearchChrome: NSObject, NSTextFieldDelegate {
     private let icon = NSImageView()
     private let field = NSTextField(string: "")
     private var onTextChange: ((String) -> Void)?
+    private var onSubmit: (() -> Void)?
 
     var view: NSView { container }
 
@@ -114,9 +115,11 @@ final class OverlaySearchChrome: NSObject, NSTextFieldDelegate {
 
     func install(
         on parent: NSView,
-        onTextChange: @escaping (String) -> Void
+        onTextChange: @escaping (String) -> Void,
+        onSubmit: @escaping () -> Void = {}
     ) {
         self.onTextChange = onTextChange
+        self.onSubmit = onSubmit
 
         // Hosting view must be transparent so frost paints, not a black plate.
         frostHost.frame = NSRect(
@@ -236,6 +239,7 @@ final class OverlaySearchChrome: NSObject, NSTextFieldDelegate {
     func remove() {
         container.removeFromSuperview()
         onTextChange = nil
+        onSubmit = nil
     }
 
     private static func placeholderAttributes(_ text: String) -> NSAttributedString {
@@ -246,6 +250,18 @@ final class OverlaySearchChrome: NSObject, NSTextFieldDelegate {
                 .font: NSFont.systemFont(ofSize: 15, weight: .medium)
             ]
         )
+    }
+
+    func control(
+        _ control: NSControl,
+        textView: NSTextView,
+        doCommandBy commandSelector: Selector
+    ) -> Bool {
+        guard commandSelector == #selector(NSResponder.insertNewline(_:)) else { return false }
+        // Return while an IME is composing confirms the candidate text; let it through.
+        if textView.hasMarkedText() { return false }
+        onSubmit?()
+        return true
     }
 
     func controlTextDidChange(_ obj: Notification) {

@@ -1118,3 +1118,44 @@ private func makeBundle(in root: URL, name: String, bundleID: String) throws {
     viewModel.restorePageOnShow(enabled: true)
     #expect(viewModel.currentPage == 2)
 }
+
+@MainActor @Test func firstLaunchableSearchResultIsNilWhenNotSearching() {
+    let calendar = makeRecord("Calendar")
+    let viewModel = LaunchpadViewModel(
+        appIndex: AppIndexStore(records: [calendar.id: calendar]),
+        layoutStore: LayoutStore(layout: .init(
+            pages: [[.app(calendar.id)]],
+            folders: [],
+            hiddenAppIDs: [],
+            grid: .init(columns: 7, rows: 5, iconSize: 72)
+        )),
+        matcher: SearchMatcher(),
+        launcher: AppLauncher(workspace: MockWorkspace())
+    )
+
+    #expect(viewModel.firstLaunchableSearchResult() == nil)
+    viewModel.searchText = "   "
+    #expect(viewModel.firstLaunchableSearchResult() == nil)
+}
+
+@MainActor @Test func firstLaunchableSearchResultReturnsTopMatch() {
+    let calendar = makeRecord("Calendar")
+    let notes = makeRecord("Notes")
+    let viewModel = LaunchpadViewModel(
+        appIndex: AppIndexStore(records: [calendar.id: calendar, notes.id: notes]),
+        layoutStore: LayoutStore(layout: .init(
+            pages: [[.app(calendar.id), .app(notes.id)]],
+            folders: [],
+            hiddenAppIDs: [],
+            grid: .init(columns: 7, rows: 5, iconSize: 72)
+        )),
+        matcher: SearchMatcher(),
+        launcher: AppLauncher(workspace: MockWorkspace())
+    )
+
+    viewModel.searchText = "cal"
+    #expect(viewModel.firstLaunchableSearchResult()?.id == calendar.id)
+
+    viewModel.searchText = "zzzz"
+    #expect(viewModel.firstLaunchableSearchResult() == nil)
+}

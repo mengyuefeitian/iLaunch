@@ -238,6 +238,16 @@ final class LaunchpadViewModel {
         self.preferences = (try? preferencesStore.load()) ?? .default
     }
 
+    /// The app a Return press in the search field should launch: the top
+    /// ranked search result, or nil when not searching / nothing matches.
+    func firstLaunchableSearchResult() -> AppRecord? {
+        guard !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
+        for item in visiblePages.first ?? [] {
+            if case .app(let record) = item.kind { return record }
+        }
+        return nil
+    }
+
     var visiblePages: [[LaunchpadDisplayItem]] {
         let recordsByID = appIndex.records
 

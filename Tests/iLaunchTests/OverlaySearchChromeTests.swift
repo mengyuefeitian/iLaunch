@@ -48,3 +48,37 @@ import Testing
     let onCapsule = NSPoint(x: 600, y: 700)
     #expect(chrome.view.hitTest(onCapsule) != nil)
 }
+
+@MainActor
+@Test func searchChromeSubmitsOnReturnKey() {
+    let chrome = OverlaySearchChrome()
+    let parent = NSView(frame: NSRect(x: 0, y: 0, width: 1200, height: 800))
+    var submitCount = 0
+    chrome.install(on: parent, onTextChange: { _ in }, onSubmit: { submitCount += 1 })
+
+    let handled = chrome.control(
+        NSTextField(),
+        textView: NSTextView(),
+        doCommandBy: #selector(NSResponder.insertNewline(_:))
+    )
+
+    #expect(handled)
+    #expect(submitCount == 1)
+}
+
+@MainActor
+@Test func searchChromeIgnoresOtherCommands() {
+    let chrome = OverlaySearchChrome()
+    let parent = NSView(frame: NSRect(x: 0, y: 0, width: 1200, height: 800))
+    var submitCount = 0
+    chrome.install(on: parent, onTextChange: { _ in }, onSubmit: { submitCount += 1 })
+
+    let handled = chrome.control(
+        NSTextField(),
+        textView: NSTextView(),
+        doCommandBy: #selector(NSResponder.deleteBackward(_:))
+    )
+
+    #expect(!handled)
+    #expect(submitCount == 0)
+}
