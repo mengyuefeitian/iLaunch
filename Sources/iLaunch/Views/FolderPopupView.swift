@@ -268,7 +268,7 @@ struct FolderPopupView: View {
         .frame(maxHeight: max(120, estimatedPanelHeight))
         .modifier(FolderPanelBackdrop(wallpaperImage: wallpaperImage))
         .contextMenu {
-            if let onDissolve, !editMode {
+            if let onDissolve, !editMode, item.id != LayoutStore.appleFolderID {
                 Button(role: .destructive) {
                     onDissolve()
                 } label: {

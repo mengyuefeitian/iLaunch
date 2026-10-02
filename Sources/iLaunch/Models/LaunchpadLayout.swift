@@ -17,7 +17,7 @@ struct LaunchpadLayout: Codable, Equatable {
     var pageCapacity: Int?
     /// Folder ids that the user has enlarged to a 2×2 tile (3×3 internal grid).
     var enlargedFolderIDs: Set<String> = []
-    /// Managed folders (Apple / directory-backed) the user dissolved; syncs must
+    /// Directory-backed folders the user dissolved; syncs must
     /// not re-create them.
     var dissolvedFolderIDs: Set<String> = []
 

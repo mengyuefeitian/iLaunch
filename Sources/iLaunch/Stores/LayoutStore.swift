@@ -118,8 +118,6 @@ struct LayoutStore {
     ///   apps a user dragged out of the folder or moved elsewhere stay put. The
     ///   folder is found by its stable id, so a renamed folder still works.
     mutating func syncAppleFolder(appleAppIDs: [String], name: String = "Apple", now: Date = Date()) {
-        // User dissolved the Apple folder: leave its apps on the grid.
-        guard !layout.dissolvedFolderIDs.contains(Self.appleFolderID) else { return }
         let onPages = Set(layout.pages.flatMap { page in
             page.compactMap { item -> String? in
                 if case .app(let id) = item { return id }
@@ -177,8 +175,9 @@ struct LayoutStore {
 
     /// Dissolves a folder of any size: members return to the page grid in order
     /// at the folder's former slot; overflow spills onto following pages.
-    /// Managed (Apple / directory) folders are remembered so syncs don't re-create them.
+    /// The Apple folder is not dissolvable (no-op). Directory folders are remembered so syncs don't re-create them.
     mutating func dissolveFolder(id folderID: String) {
+        guard folderID != Self.appleFolderID else { return }
         guard let folderIndex = layout.folders.firstIndex(where: { $0.id == folderID }) else { return }
         let members = layout.folders[folderIndex].items
 
@@ -206,7 +205,7 @@ struct LayoutStore {
 
         layout.enlargedFolderIDs.remove(folderID)
         layout.folders.remove(at: folderIndex)
-        if folderID == Self.appleFolderID || folderID.hasPrefix("dir:") {
+        if folderID.hasPrefix("dir:") {
             layout.dissolvedFolderIDs.insert(folderID)
         }
         reflowOverflow(from: folderPage)

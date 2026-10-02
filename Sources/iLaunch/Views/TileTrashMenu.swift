@@ -54,7 +54,7 @@ struct TileTrashMenu: ViewModifier {
                             Label(Localizer.t("menu.enlargeFolder"), systemImage: "arrow.up.left.and.arrow.down.right")
                         }
                     }
-                    if let onDissolve {
+                    if let onDissolve, item.id != LayoutStore.appleFolderID {
                         Button(role: .destructive) {
                             onDissolve(item)
                         } label: {

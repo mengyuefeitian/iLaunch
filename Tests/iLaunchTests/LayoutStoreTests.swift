@@ -696,16 +696,15 @@ private func makeFolder(_ id: String, _ items: [String]) -> LaunchpadFolder {
     #expect(store.layout == before)
 }
 
-@Test func dissolvedAppleFolderIsNotRecreatedBySync() {
+@Test func dissolveAppleFolderIsNoOp() {
     var store = dissolveStore(
         pages: [[.folder(LayoutStore.appleFolderID)]],
         folders: [makeFolder(LayoutStore.appleFolderID, ["a", "b"])],
         columns: 6
     )
+    let before = store.layout
     store.dissolveFolder(id: LayoutStore.appleFolderID)
-    store.syncAppleFolder(appleAppIDs: ["a", "b"])
-    #expect(store.layout.folders.isEmpty)
-    #expect(store.layout.pages == [[.app("a"), .app("b")]])
+    #expect(store.layout == before)
 }
 
 @Test func dissolvedDirectoryFolderIsNotRecreatedBySync() {

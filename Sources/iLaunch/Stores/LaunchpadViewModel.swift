@@ -459,6 +459,7 @@ final class LaunchpadViewModel {
 
     /// Dissolves a folder (any size): members return to the grid at its slot.
     func dissolveFolder(id: String) {
+        guard id != LayoutStore.appleFolderID else { return }
         if openFolder?.id == id {
             // Close without waiting for the zoom-out: the folder is going away.
             finishClosingFolder()
