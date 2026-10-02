@@ -10,6 +10,7 @@ struct FolderPopupView: View {
     let onRename: (String) -> Void
     let onTrash: (AppRecord) -> Void
     let onClose: () -> Void
+    var onDissolve: (() -> Void)? = nil
     /// Invoked after the close scale/fade finishes so the parent can nil `openFolder`.
     var onCloseAnimationFinished: (() -> Void)? = nil
     /// When this value increases while the popup is visible, play the close animation.
@@ -63,17 +64,28 @@ struct FolderPopupView: View {
 
     private var panelWidth: CGFloat { 5 * folderTileWidth + 4 * 16 + 52 }
 
+    private let maxScrollViewport: CGFloat = 560
+    /// Gap kept below the scroll area when it scrolls, so the indicator ends
+    /// well above the panel's rounded bottom corners (radius 32).
+    private let scrollBottomInset: CGFloat = 32
+
+    /// Natural (unclipped) height of the member grid, incl. its bottom padding.
+    private var memberGridContentHeight: CGFloat {
+        let columns = 5
+        let rows = max(1, (item.members.count + columns - 1) / columns)
+        return CGFloat(rows) * folderTileHeight + CGFloat(max(0, rows - 1)) * 24 + 26
+    }
+
+    /// True only when the grid is taller than the viewport; otherwise no
+    /// scrolling and no scroll indicator.
+    private var isScrollable: Bool { memberGridContentHeight > maxScrollViewport }
+
     /// Estimate resting panel height so we can map source tile → full panel scale.
     private var estimatedPanelHeight: CGFloat {
-        let columns = 5
-        let rows = max(1, min(4, (item.members.count + columns - 1) / columns))
         let titleBlock: CGFloat = 26 + 28
         let vSpacing: CGFloat = 20
-        let grid =
-            CGFloat(rows) * folderTileHeight
-            + CGFloat(max(0, rows - 1)) * 24
-            + 26
-        return titleBlock + vSpacing + min(560, grid)
+        return titleBlock + vSpacing + min(maxScrollViewport, memberGridContentHeight)
+            + (isScrollable ? scrollBottomInset : 0)
     }
 
     private var columns: [GridItem] {
@@ -238,7 +250,7 @@ struct FolderPopupView: View {
             titleView
                 .padding(.top, 26)
 
-            ScrollView {
+            ScrollView(.vertical, showsIndicators: isScrollable) {
                 LazyVGrid(columns: columns, spacing: 24) {
                     ForEach(item.members) { member in
                         folderMemberCell(member: member)
@@ -248,11 +260,22 @@ struct FolderPopupView: View {
                 .padding(.horizontal, 26)
                 .padding(.bottom, 26)
             }
-            .frame(maxHeight: 560)
+            .scrollDisabled(!isScrollable)
+            .frame(maxHeight: maxScrollViewport)
+            .padding(.bottom, isScrollable ? scrollBottomInset : 0)
         }
         .frame(width: panelWidth)
         .frame(maxHeight: max(120, estimatedPanelHeight))
         .modifier(FolderPanelBackdrop(wallpaperImage: wallpaperImage))
+        .contextMenu {
+            if let onDissolve, !editMode {
+                Button(role: .destructive) {
+                    onDissolve()
+                } label: {
+                    Label(Localizer.t("menu.dissolveFolder"), systemImage: "rectangle.stack.badge.minus")
+                }
+            }
+        }
     }
 
     private func playOpenAnimationIfNeeded() {

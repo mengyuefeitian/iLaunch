@@ -15,6 +15,7 @@ struct LaunchpadGridView: View {
     let onHide: (LaunchpadDisplayItem) -> Void
     let onEnlarge: (LaunchpadDisplayItem) -> Void
     let onShrink: (LaunchpadDisplayItem) -> Void
+    let onDissolve: (LaunchpadDisplayItem) -> Void
     let onDismiss: () -> Void
     var animatePageFlip: Bool = true
     var animateIcons: Bool = true
@@ -258,6 +259,7 @@ struct LaunchpadGridView: View {
             isEnlarged: enlarged,
             onEnlarge: onEnlarge,
             onShrink: onShrink,
+            onDissolve: onDissolve,
             onHide: onHide,
             editMode: editMode
         ))

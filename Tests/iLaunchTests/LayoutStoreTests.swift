@@ -626,3 +626,96 @@ import Testing
     store.reorderFolderItem(folderID: "folder:nonexistent", appID: "a", toIndex: 1)
     #expect(store.layout.folders[0].items == ["a", "b"])
 }
+
+
+// MARK: - dissolveFolder
+
+private func dissolveStore(
+    pages: [[LaunchpadItem]],
+    folders: [LaunchpadFolder],
+    columns: Int = 4,
+    rows: Int = 1,
+    enlarged: Set<String> = []
+) -> LayoutStore {
+    LayoutStore(layout: .init(
+        pages: pages,
+        folders: folders,
+        hiddenAppIDs: [],
+        grid: .init(columns: columns, rows: rows, iconSize: 72),
+        enlargedFolderIDs: enlarged
+    ))
+}
+
+private func makeFolder(_ id: String, _ items: [String]) -> LaunchpadFolder {
+    LaunchpadFolder(id: id, name: id, items: items, createdAt: Date(timeIntervalSince1970: 0), updatedAt: Date(timeIntervalSince1970: 0))
+}
+
+@Test func dissolveFolderPutsMembersBackInOrderAtFolderSlot() {
+    var store = dissolveStore(
+        pages: [[.app("x"), .folder("f"), .app("y")]],
+        folders: [makeFolder("f", ["a", "b"])],
+        columns: 6
+    )
+    store.dissolveFolder(id: "f")
+    #expect(store.layout.folders.isEmpty)
+    #expect(store.layout.pages == [[.app("x"), .app("a"), .app("b"), .app("y")]])
+}
+
+@Test func dissolveFolderSpillsOverflowToNextPage() {
+    var store = dissolveStore(
+        pages: [[.app("x"), .folder("f"), .app("y"), .app("z")]],
+        folders: [makeFolder("f", ["a", "b", "c"])],
+        columns: 4
+    )
+    store.dissolveFolder(id: "f")
+    #expect(store.layout.pages == [
+        [.app("x"), .app("a"), .app("b"), .app("c")],
+        [.app("y"), .app("z")],
+    ])
+}
+
+@Test func dissolveFolderClearsEnlargedFlag() {
+    var store = dissolveStore(
+        pages: [[.folder("f")]],
+        folders: [makeFolder("f", ["a", "b", "c", "d", "e"])],
+        columns: 7,
+        enlarged: ["f"]
+    )
+    store.dissolveFolder(id: "f")
+    #expect(store.layout.enlargedFolderIDs.isEmpty)
+    #expect(store.layout.pages == [[.app("a"), .app("b"), .app("c"), .app("d"), .app("e")]])
+}
+
+@Test func dissolveUnknownFolderIsNoOp() {
+    var store = dissolveStore(
+        pages: [[.folder("f")]],
+        folders: [makeFolder("f", ["a", "b"])]
+    )
+    let before = store.layout
+    store.dissolveFolder(id: "nope")
+    #expect(store.layout == before)
+}
+
+@Test func dissolvedAppleFolderIsNotRecreatedBySync() {
+    var store = dissolveStore(
+        pages: [[.folder(LayoutStore.appleFolderID)]],
+        folders: [makeFolder(LayoutStore.appleFolderID, ["a", "b"])],
+        columns: 6
+    )
+    store.dissolveFolder(id: LayoutStore.appleFolderID)
+    store.syncAppleFolder(appleAppIDs: ["a", "b"])
+    #expect(store.layout.folders.isEmpty)
+    #expect(store.layout.pages == [[.app("a"), .app("b")]])
+}
+
+@Test func dissolvedDirectoryFolderIsNotRecreatedBySync() {
+    var store = dissolveStore(
+        pages: [[.folder("dir:py")]],
+        folders: [makeFolder("dir:py", ["a", "b"])],
+        columns: 6
+    )
+    store.dissolveFolder(id: "dir:py")
+    store.syncDirectoryFolders([DirectoryFolder(id: "dir:py", name: "py", path: "/Applications/py", appIDs: ["a", "b"])])
+    #expect(store.layout.folders.isEmpty)
+    #expect(store.layout.pages == [[.app("a"), .app("b")]])
+}

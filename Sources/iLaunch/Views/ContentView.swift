@@ -86,6 +86,7 @@ struct ContentView: View {
                             }
                         },
                         onClose: { closeFolderPopup() },
+                        onDissolve: { viewModel.dissolveFolder(id: folder.id) },
                         onCloseAnimationFinished: {
                             // Only clear if this folder is still open — stale close
                             // timers from a previous popup must not kill a new one.
@@ -198,14 +199,7 @@ struct ContentView: View {
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .iLaunchGridDragMoved)) { note in
-            if let update = note.object as? GridDragLocationUpdate {
-                if viewModel.gridDragItem == nil {
-                    viewModel.gridDragItem = viewModel.visiblePages
-                        .flatMap { $0 }
-                        .first(where: { $0.id == update.id })
-                }
-                viewModel.gridDragLocation = update.location
-            }
+            handleGridDragMoved(note)
         }
         .onReceive(NotificationCenter.default.publisher(for: .iLaunchGridDragEnded)) { _ in
             viewModel.endLiveReorder()
@@ -215,6 +209,15 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: .iLaunchEditModeCancelled)) { _ in
             viewModel.editMode = false
         }
+    }
+
+    private func handleGridDragMoved(_ note: Notification) {
+        guard let update = note.object as? GridDragLocationUpdate else { return }
+        if viewModel.gridDragItem == nil {
+            let allItems: [LaunchpadDisplayItem] = viewModel.visiblePages.flatMap { $0 }
+            viewModel.gridDragItem = allItems.first(where: { $0.id == update.id })
+        }
+        viewModel.gridDragLocation = update.location
     }
 
     @ViewBuilder
@@ -256,6 +259,9 @@ struct ContentView: View {
                 },
                 onShrink: { item in
                     viewModel.shrinkFolder(id: item.id)
+                },
+                onDissolve: { item in
+                    viewModel.dissolveFolder(id: item.id)
                 },
                 onDismiss: { dismiss() },
                 animatePageFlip: animEnabled && preferences.animatePageFlip,

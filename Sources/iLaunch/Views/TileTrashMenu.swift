@@ -9,6 +9,7 @@ struct TileTrashMenu: ViewModifier {
     var isEnlarged: Bool = false
     var onEnlarge: ((LaunchpadDisplayItem) -> Void)?
     var onShrink: ((LaunchpadDisplayItem) -> Void)?
+    var onDissolve: ((LaunchpadDisplayItem) -> Void)?
     var onHide: ((LaunchpadDisplayItem) -> Void)?
     var editMode: Bool = false
 
@@ -51,6 +52,13 @@ struct TileTrashMenu: ViewModifier {
                             onEnlarge?(item)
                         } label: {
                             Label(Localizer.t("menu.enlargeFolder"), systemImage: "arrow.up.left.and.arrow.down.right")
+                        }
+                    }
+                    if let onDissolve {
+                        Button(role: .destructive) {
+                            onDissolve(item)
+                        } label: {
+                            Label(Localizer.t("menu.dissolveFolder"), systemImage: "rectangle.stack.badge.minus")
                         }
                     }
                 }

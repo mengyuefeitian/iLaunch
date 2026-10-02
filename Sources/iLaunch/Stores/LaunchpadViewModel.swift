@@ -457,6 +457,17 @@ final class LaunchpadViewModel {
         persistLayout()
     }
 
+    /// Dissolves a folder (any size): members return to the grid at its slot.
+    func dissolveFolder(id: String) {
+        if openFolder?.id == id {
+            // Close without waiting for the zoom-out: the folder is going away.
+            finishClosingFolder()
+        }
+        layoutStore.dissolveFolder(id: id)
+        layoutStore.updateGrid(columns: gridColumns, rows: gridRows)
+        persistLayout()
+    }
+
     func reorderInFolder(folderID: String, appID: String, toIndex: Int) {
         layoutStore.reorderFolderItem(folderID: folderID, appID: appID, toIndex: toIndex)
         persistLayout()

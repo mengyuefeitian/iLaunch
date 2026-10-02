@@ -17,6 +17,9 @@ struct LaunchpadLayout: Codable, Equatable {
     var pageCapacity: Int?
     /// Folder ids that the user has enlarged to a 2×2 tile (3×3 internal grid).
     var enlargedFolderIDs: Set<String> = []
+    /// Managed folders (Apple / directory-backed) the user dissolved; syncs must
+    /// not re-create them.
+    var dissolvedFolderIDs: Set<String> = []
 
     var effectivePageCapacity: Int {
         pageCapacity ?? max(1, grid.columns * grid.rows)
@@ -32,7 +35,7 @@ struct LaunchpadLayout: Codable, Equatable {
     )
 
     private enum CodingKeys: String, CodingKey {
-        case pages, folders, hiddenAppIDs, grid, pageCapacity, enlargedFolderIDs
+        case pages, folders, hiddenAppIDs, grid, pageCapacity, enlargedFolderIDs, dissolvedFolderIDs
     }
 
     init(pages: [[LaunchpadItem]], folders: [LaunchpadFolder], hiddenAppIDs: Set<String>, grid: Grid, pageCapacity: Int? = nil, enlargedFolderIDs: Set<String> = []) {
@@ -52,5 +55,6 @@ struct LaunchpadLayout: Codable, Equatable {
         grid = try c.decode(Grid.self, forKey: .grid)
         pageCapacity = try c.decodeIfPresent(Int.self, forKey: .pageCapacity)
         enlargedFolderIDs = try c.decodeIfPresent(Set<String>.self, forKey: .enlargedFolderIDs) ?? []
+        dissolvedFolderIDs = try c.decodeIfPresent(Set<String>.self, forKey: .dissolvedFolderIDs) ?? []
     }
 }

@@ -79,7 +79,7 @@ struct LayoutStore {
     /// Member apps are removed from page grids so they only appear inside the folder,
     /// and the folder itself is placed once if not already present.
     mutating func syncDirectoryFolders(_ folders: [DirectoryFolder], now: Date = Date()) {
-        for directoryFolder in folders {
+        for directoryFolder in folders where !layout.dissolvedFolderIDs.contains(directoryFolder.id) {
             if let index = layout.folders.firstIndex(where: { $0.id == directoryFolder.id }) {
                 layout.folders[index].items = directoryFolder.appIDs
                 layout.folders[index].updatedAt = now
@@ -118,6 +118,8 @@ struct LayoutStore {
     ///   apps a user dragged out of the folder or moved elsewhere stay put. The
     ///   folder is found by its stable id, so a renamed folder still works.
     mutating func syncAppleFolder(appleAppIDs: [String], name: String = "Apple", now: Date = Date()) {
+        // User dissolved the Apple folder: leave its apps on the grid.
+        guard !layout.dissolvedFolderIDs.contains(Self.appleFolderID) else { return }
         let onPages = Set(layout.pages.flatMap { page in
             page.compactMap { item -> String? in
                 if case .app(let id) = item { return id }
@@ -170,6 +172,44 @@ struct LayoutStore {
         layout.folders[index].items.append(appID)
         layout.folders[index].updatedAt = now
         removeItem(id: "app:\(appID)")
+        removeEmptyTrailingPages()
+    }
+
+    /// Dissolves a folder of any size: members return to the page grid in order
+    /// at the folder's former slot; overflow spills onto following pages.
+    /// Managed (Apple / directory) folders are remembered so syncs don't re-create them.
+    mutating func dissolveFolder(id folderID: String) {
+        guard let folderIndex = layout.folders.firstIndex(where: { $0.id == folderID }) else { return }
+        let members = layout.folders[folderIndex].items
+
+        var folderPage = 0
+        var folderSlot = 0
+        var found = false
+        outer: for (pi, page) in layout.pages.enumerated() {
+            for (ii, item) in page.enumerated() {
+                if case .folder(let id) = item, id == folderID {
+                    folderPage = pi
+                    folderSlot = ii
+                    found = true
+                    break outer
+                }
+            }
+        }
+        if layout.pages.isEmpty { layout.pages = [[]] }
+
+        if found {
+            layout.pages[folderPage].remove(at: folderSlot)
+        }
+        for member in members { removeItem(id: "app:\(member)") }
+        let slot = min(folderSlot, layout.pages[folderPage].count)
+        layout.pages[folderPage].insert(contentsOf: members.map { LaunchpadItem.app($0) }, at: slot)
+
+        layout.enlargedFolderIDs.remove(folderID)
+        layout.folders.remove(at: folderIndex)
+        if folderID == Self.appleFolderID || folderID.hasPrefix("dir:") {
+            layout.dissolvedFolderIDs.insert(folderID)
+        }
+        reflowOverflow(from: folderPage)
         removeEmptyTrailingPages()
     }
 
