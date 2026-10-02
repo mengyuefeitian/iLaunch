@@ -90,9 +90,9 @@ cat >"$INFO_PLIST" <<PLIST
   <key>CFBundleName</key>
   <string>$APP_NAME</string>
   <key>CFBundleShortVersionString</key>
-  <string>1.11.0</string>
+  <string>1.12.0</string>
   <key>CFBundleVersion</key>
-  <string>1.11.0</string>
+  <string>1.12.0</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>LSMinimumSystemVersion</key>
