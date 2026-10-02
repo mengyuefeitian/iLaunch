@@ -563,8 +563,9 @@ struct BackgroundImagePicker: View {
     let onSave: () -> Void
 
     private let maxImages = 10
-    /// 5 columns × 2 rows grid
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 5)
+    /// Adaptive columns: each cell is bounded so thumbnails can never
+    /// overflow into their neighbours regardless of window width.
+    private let columns = [GridItem(.adaptive(minimum: 110, maximum: 170), spacing: 10)]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -593,7 +594,7 @@ struct BackgroundImagePicker: View {
             }
 
             if !images.isEmpty {
-                LazyVGrid(columns: columns, spacing: 8) {
+                LazyVGrid(columns: columns, spacing: 10) {
                     ForEach(images.indices, id: \.self) { index in
                         BackgroundThumbnail(
                             path: images[index],
@@ -639,36 +640,37 @@ struct BackgroundThumbnail: View {
     let path: String
     let onDelete: () -> Void
 
+    private static let cornerRadius: CGFloat = 8
+
     var body: some View {
-        ZStack(alignment: .topTrailing) {
-            Group {
+        // The invisible fixed-ratio base defines the cell size; the image is
+        // an overlay that fills and is center-cropped, so it can never push
+        // the cell wider than its grid column.
+        Color.clear
+            .aspectRatio(16.0 / 10.0, contentMode: .fit)
+            .overlay {
                 if let nsImage = NSImage(contentsOfFile: path) {
-                    // The grid cell is a wide rectangle (flexible column width,
-                    // fixed 64pt height), not a square — forcing aspectRatio(1)
-                    // coerced every photo into a square crop first and then
-                    // stretched that square to fit the rectangular cell,
-                    // squishing it. Using the image's own native ratio with
-                    // .fill covers the actual cell without distortion.
                     Image(nsImage: nsImage)
                         .resizable()
                         .aspectRatio(contentMode: .fill)
                 } else {
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.3))
+                    Rectangle().fill(Color.gray.opacity(0.3))
                 }
             }
-            .frame(height: 64)
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-            .clipped()
-
-            Button(action: onDelete) {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 16))
-                    .foregroundStyle(.white, .black.opacity(0.5))
+            .clipShape(RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous)
+                    .strokeBorder(Color.secondary.opacity(0.35), lineWidth: 1)
             }
-            .buttonStyle(.plain)
-            .padding(4)
-        }
+            .overlay(alignment: .topTrailing) {
+                Button(action: onDelete) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 16))
+                        .foregroundStyle(.white, .black.opacity(0.5))
+                }
+                .buttonStyle(.plain)
+                .padding(4)
+            }
     }
 }
 

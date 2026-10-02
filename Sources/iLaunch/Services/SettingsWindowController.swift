@@ -14,7 +14,7 @@ final class SettingsWindowController {
     /// was added). The window's on-screen size stays the same as it always
     /// was — `NSWindow` still adds the titlebar/toolbar height on top of this
     /// when computing the frame.
-    static let contentSize = NSSize(width: 700, height: 520)
+    static let contentSize = NSSize(width: 780, height: 580)
 
     private var window: NSWindow?
     private weak var viewModel: LaunchpadViewModel?
