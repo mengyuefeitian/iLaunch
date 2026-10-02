@@ -1,3 +1,12 @@
+## 1.12.0 - 2026-10-02
+
+### Features
+- Pressing Return in search now launches the first result.
+
+### Fixes
+- Safari (and any other app or folder reached through a symbolic link) now appears in the launcher and in search.
+- Background images in Settings are shown in an adaptive grid: each thumbnail keeps its proportions inside its own bordered cell, and every thumbnail has its own delete button. The default Settings window is also slightly larger.
+
 ## 1.11.0 - 2026-10-02
 
 ### Features
