@@ -179,8 +179,8 @@ final class OverlayWindowController {
         viewModel.editMode = false
         viewModel.editDragID = nil
         viewModel.editDragTranslation = .zero
-        viewModel.currentPage = 0
         viewModel.searchText = ""
+        viewModel.restorePageOnShow(enabled: prefs.rememberLastPage)
         viewModel.clearFloatingDrag()
         recoverFirstContentClick = true
 
@@ -324,6 +324,10 @@ final class OverlayWindowController {
     ///   dismissed because a Dock click activated another app — that app
     ///   should keep focus, not `appToReactivate`.
     func hide(reactivatePrevious: Bool = true) {
+        if window != nil {
+            let remember = (try? preferencesStore.load())?.rememberLastPage ?? true
+            viewModel.rememberPageOnHide(enabled: remember)
+        }
         removeResignActiveObserver()
         removeScrollMonitor()
         removeClickMonitor()

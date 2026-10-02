@@ -171,6 +171,8 @@ struct Localizer {
 
         // Layout settings
         "settings.layout": "Layout",
+        "settings.rememberLastPage": "Remember last opened page",
+        "settings.rememberLastPageHint": "Reopening the overlay returns to the page you left; quitting the app fully still starts from page 1.",
         "settings.gridRows": "Rows per page",
         "settings.gridRowsAuto": "Auto",
         "settings.gridColumns": "Columns per page",
@@ -291,6 +293,8 @@ struct Localizer {
 
         // Layout settings
         "settings.layout": "布局",
+        "settings.rememberLastPage": "记住上次打开的页面",
+        "settings.rememberLastPageHint": "关闭界面后再次打开时回到离开时所在的屏；完全退出 App 后仍从第一屏开始",
         "settings.gridRows": "每页行数",
         "settings.gridRowsAuto": "自动",
         "settings.gridColumns": "每页列数",
@@ -411,6 +415,8 @@ struct Localizer {
 
         // Layout settings
         "settings.layout": "レイアウト",
+        "settings.rememberLastPage": "前回開いたページを記憶",
+        "settings.rememberLastPageHint": "閉じた後に再度開くと前回のページに戻ります。アプリを完全に終了すると最初のページから始まります。",
         "settings.gridRows": "ページあたりの行数",
         "settings.gridRowsAuto": "自動",
         "settings.gridColumns": "ページあたりの列数",
@@ -531,6 +537,8 @@ struct Localizer {
 
         // Layout settings
         "settings.layout": "레이아웃",
+        "settings.rememberLastPage": "마지막으로 연 페이지 기억",
+        "settings.rememberLastPageHint": "다시 열면 닫았던 페이지로 돌아갑니다. 앱을 완전히 종료하면 첫 페이지부터 시작합니다.",
         "settings.gridRows": "페이지당 행 수",
         "settings.gridRowsAuto": "자동",
         "settings.gridColumns": "페이지당 열 수",
@@ -650,6 +658,8 @@ struct Localizer {
 
         // Layout settings
         "settings.layout": "Раскладка",
+        "settings.rememberLastPage": "Запоминать последнюю страницу",
+        "settings.rememberLastPageHint": "При повторном открытии показывается страница, на которой вы закрыли окно; после полного выхода из приложения — снова первая.",
         "settings.gridRows": "Строк на странице",
         "settings.gridRowsAuto": "Авто",
         "settings.gridColumns": "Столбцов на странице",

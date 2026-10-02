@@ -123,6 +123,8 @@ struct UserPreferences: Codable, Equatable {
     /// floating on top of the overlay (like Launchpad). Default off: the
     /// Dock stays visible and clickable while the overlay is open.
     var coverDock: Bool = false
+    /// Reopen the overlay on the page it was closed on (in-memory for the running process only).
+    var rememberLastPage: Bool = true
 
     static let `default` = UserPreferences(
         hotKeyCode: 49,        // kVK_Space
@@ -153,9 +155,10 @@ struct UserPreferences: Codable, Equatable {
         case gridRows, gridColumns, iconSizeLevel, showAppNames
         case diagLoggingEnabled
         case coverDock
+        case rememberLastPage
     }
 
-    init(hotKeyCode: UInt32, hotKeyModifiers: UInt32, launchAtLogin: Bool, showMenuBarIcon: Bool, showDockIcon: Bool, backgroundBlur: Double, reduceMotion: Bool, showSystemApplications: Bool, overlayDisplayMode: OverlayDisplayMode, scanDirectories: [String], appIconStyle: AppIconStyle = .icon02, language: Language = .system, backgroundMode: BackgroundMode = .desktop, backgroundImages: [String] = [], autoCarousel: Bool = false, animateIcons: Bool = true, animatePageFlip: Bool = true, animateFolder: Bool = true, animateDrag: Bool = true, animateSearch: Bool = true, showHiddenInSearch: Bool = true, gridRows: Int = 4, gridColumns: Int = 7, iconSizeLevel: IconSizeLevel = .medium, showAppNames: Bool = true, diagLoggingEnabled: Bool = true, coverDock: Bool = false) {
+    init(hotKeyCode: UInt32, hotKeyModifiers: UInt32, launchAtLogin: Bool, showMenuBarIcon: Bool, showDockIcon: Bool, backgroundBlur: Double, reduceMotion: Bool, showSystemApplications: Bool, overlayDisplayMode: OverlayDisplayMode, scanDirectories: [String], appIconStyle: AppIconStyle = .icon02, language: Language = .system, backgroundMode: BackgroundMode = .desktop, backgroundImages: [String] = [], autoCarousel: Bool = false, animateIcons: Bool = true, animatePageFlip: Bool = true, animateFolder: Bool = true, animateDrag: Bool = true, animateSearch: Bool = true, showHiddenInSearch: Bool = true, gridRows: Int = 4, gridColumns: Int = 7, iconSizeLevel: IconSizeLevel = .medium, showAppNames: Bool = true, diagLoggingEnabled: Bool = true, coverDock: Bool = false, rememberLastPage: Bool = true) {
         self.hotKeyCode = hotKeyCode
         self.hotKeyModifiers = hotKeyModifiers
         self.launchAtLogin = launchAtLogin
@@ -183,6 +186,7 @@ struct UserPreferences: Codable, Equatable {
         self.showAppNames = showAppNames
         self.diagLoggingEnabled = diagLoggingEnabled
         self.coverDock = coverDock
+        self.rememberLastPage = rememberLastPage
     }
 
     init(from decoder: Decoder) throws {
@@ -217,5 +221,6 @@ struct UserPreferences: Codable, Equatable {
         // existing user has `true` saved there, but the product decision is
         // that everyone gets the new Dock-visible behaviour after upgrading.
         coverDock = (try? c.decodeIfPresent(Bool.self, forKey: .coverDock)) ?? false
+        rememberLastPage = (try? c.decodeIfPresent(Bool.self, forKey: .rememberLastPage)) ?? true
     }
 }

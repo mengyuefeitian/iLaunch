@@ -1053,3 +1053,68 @@ private func makeBundle(in root: URL, name: String, bundleID: String) throws {
     </plist>
     """.data(using: .utf8)!.write(to: plist)
 }
+
+// MARK: - remember last page
+
+@MainActor private func makePagedViewModel(pageCount: Int) -> LaunchpadViewModel {
+    let records = (0..<pageCount).map { makeRecord("App\($0)") }
+    return LaunchpadViewModel(
+        appIndex: AppIndexStore(records: Dictionary(uniqueKeysWithValues: records.map { ($0.id, $0) })),
+        layoutStore: LayoutStore(layout: .init(
+            pages: records.map { [.app($0.id)] },
+            folders: [],
+            hiddenAppIDs: [],
+            grid: .init(columns: 7, rows: 5, iconSize: 72)
+        )),
+        matcher: SearchMatcher(),
+        launcher: AppLauncher(workspace: MockWorkspace())
+    )
+}
+
+@MainActor @Test func restoresRememberedPageOnShowWhenEnabled() {
+    let viewModel = makePagedViewModel(pageCount: 4)
+    viewModel.currentPage = 2
+    viewModel.rememberPageOnHide(enabled: true)
+    viewModel.currentPage = 0
+    viewModel.restorePageOnShow(enabled: true)
+    #expect(viewModel.currentPage == 2)
+}
+
+@MainActor @Test func showOpensPageZeroWhenRememberDisabled() {
+    let viewModel = makePagedViewModel(pageCount: 4)
+    viewModel.currentPage = 2
+    viewModel.rememberPageOnHide(enabled: false)
+    viewModel.restorePageOnShow(enabled: false)
+    #expect(viewModel.currentPage == 0)
+    // Turning it on later must not resurrect a page captured while disabled.
+    viewModel.restorePageOnShow(enabled: true)
+    #expect(viewModel.currentPage == 0)
+}
+
+@MainActor @Test func restoredPageIsClampedWhenPagesShrank() {
+    let viewModel = makePagedViewModel(pageCount: 4)
+    viewModel.currentPage = 3
+    viewModel.rememberPageOnHide(enabled: true)
+    let small = makePagedViewModel(pageCount: 2)
+    small.rememberedPage = viewModel.rememberedPage
+    small.restorePageOnShow(enabled: true)
+    #expect(small.currentPage == 1)
+}
+
+@MainActor @Test func freshViewModelStartsOnPageZeroEvenWhenEnabled() {
+    let viewModel = makePagedViewModel(pageCount: 4)
+    viewModel.restorePageOnShow(enabled: true)
+    #expect(viewModel.currentPage == 0)
+}
+
+@MainActor @Test func hideWhileSearchingKeepsPreviouslyRememberedPage() {
+    let viewModel = makePagedViewModel(pageCount: 4)
+    viewModel.currentPage = 2
+    viewModel.rememberPageOnHide(enabled: true)
+    viewModel.searchText = "App"
+    viewModel.currentPage = 0
+    viewModel.rememberPageOnHide(enabled: true)
+    viewModel.searchText = ""
+    viewModel.restorePageOnShow(enabled: true)
+    #expect(viewModel.currentPage == 2)
+}

@@ -120,3 +120,23 @@ import Testing
     let decoded = try JSONDecoder.iLaunch.decode(UserPreferences.self, from: data)
     #expect(decoded.coverDock == true)
 }
+
+@Test func rememberLastPageDefaultsToTrueForNewAndLegacyPreferences() throws {
+    #expect(UserPreferences.default.rememberLastPage == true)
+    let legacyJSON = """
+    {
+        "hotKeyCode": 49,
+        "hotKeyModifiers": 2048,
+        "launchAtLogin": false,
+        "showMenuBarIcon": true,
+        "showDockIcon": true,
+        "backgroundBlur": 0.72,
+        "reduceMotion": false,
+        "showSystemApplications": true,
+        "overlayDisplayMode": "activeDisplay",
+        "scanDirectories": ["/Applications"]
+    }
+    """
+    let decoded = try JSONDecoder.iLaunch.decode(UserPreferences.self, from: Data(legacyJSON.utf8))
+    #expect(decoded.rememberLastPage == true)
+}

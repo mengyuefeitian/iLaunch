@@ -147,6 +147,13 @@ struct LaunchpadGridView: View {
         .onReceive(NotificationCenter.default.publisher(for: .iLaunchEditDragEnded)) { _ in
             resetDragHandoffState()
         }
+        .onAppear {
+            // A fresh overlay opens on the remembered page without sliding.
+            guard let page = externalCurrentPage, page != currentPage else { return }
+            var transaction = Transaction()
+            transaction.disablesAnimations = true
+            withTransaction(transaction) { currentPage = clamp(page) }
+        }
         .onChange(of: pages.count) {
             currentPage = clamp(currentPage)
         }

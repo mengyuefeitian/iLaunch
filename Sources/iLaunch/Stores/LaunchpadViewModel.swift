@@ -139,6 +139,31 @@ final class LaunchpadViewModel {
     /// so drag-out from a folder can insert on the page the user is viewing.
     var currentPage = 0
 
+    /// Page the overlay was last dismissed on. In-memory only: a relaunch
+    /// always starts at page 0.
+    var rememberedPage = 0
+
+    /// Call when the overlay hides. Ignored while searching (the grid then shows
+    /// search results, so `currentPage` is not a real page).
+    func rememberPageOnHide(enabled: Bool) {
+        guard enabled else {
+            rememberedPage = 0
+            return
+        }
+        guard searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        rememberedPage = currentPage
+    }
+
+    /// Call when the overlay shows (after search text is cleared). Clamps to the
+    /// current page count in case pages shrank while hidden.
+    func restorePageOnShow(enabled: Bool) {
+        guard enabled else {
+            currentPage = 0
+            return
+        }
+        currentPage = min(max(0, rememberedPage), max(0, visiblePages.count - 1))
+    }
+
     var showSystemApplications: Bool = true
     var showHiddenInSearch: Bool = true
 

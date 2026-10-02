@@ -269,6 +269,11 @@ struct AppearanceSettingsView: View {
                     Text("10").tag(10)
                 }
                 .pickerStyle(.segmented)
+
+                Toggle(Localizer.t("settings.rememberLastPage"), isOn: $preferences.rememberLastPage)
+                Text(Localizer.t("settings.rememberLastPageHint"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             Section(Localizer.t("settings.iconSize")) {
