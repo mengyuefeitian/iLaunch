@@ -36,7 +36,7 @@ enum GridMetrics {
     }
 
     /// Returns the user-configured row count (clamped to valid range 4–6).
-    static func effectiveRows(preference: Int, screenHeight: CGFloat) -> Int {
+    static func effectiveRows(preference: Int) -> Int {
         if preference >= 4 && preference <= 6 {
             return preference
         }
@@ -46,6 +46,24 @@ enum GridMetrics {
     /// Returns the user-configured column count (clamped to valid range).
     static func effectiveColumns(preference: Int) -> Int {
         min(max(preference, 6), 10)
+    }
+
+    /// Rows × columns for the screen's orientation. On a portrait display the
+    /// (clamped) landscape rows and columns are swapped, so page capacity and
+    /// reading order stay identical and only the wrap width changes.
+    static func effectiveGrid(
+        rowsPreference: Int,
+        columnsPreference: Int,
+        isPortrait: Bool
+    ) -> (rows: Int, columns: Int) {
+        let rows = effectiveRows(preference: rowsPreference)
+        let columns = effectiveColumns(preference: columnsPreference)
+        return isPortrait ? (rows: columns, columns: rows) : (rows: rows, columns: columns)
+    }
+
+    /// A screen is portrait only when strictly taller than wide.
+    static func isPortrait(screenSize: CGSize) -> Bool {
+        screenSize.height > screenSize.width
     }
 
     /// Computes cell dimensions for a fixed rows×cols grid within the given area.

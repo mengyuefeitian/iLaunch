@@ -201,19 +201,25 @@ final class LaunchpadViewModel {
     private let preferencesStore: PreferencesStore
     private let layoutPersistence: LayoutPersistenceStore
     private let trasher: AppTrashing
-    private let screenHeight: CGFloat
 
     var preferences: UserPreferences
 
-    /// Rows per page: user-configured (4/5/6) or auto from screen height.
-    var gridRows: Int {
-        GridMetrics.effectiveRows(preference: preferences.gridRows, screenHeight: screenHeight)
+    /// Whether the overlay's display is portrait; rows and columns swap there.
+    private(set) var isPortraitScreen: Bool
+
+    private var effectiveGrid: (rows: Int, columns: Int) {
+        GridMetrics.effectiveGrid(
+            rowsPreference: preferences.gridRows,
+            columnsPreference: preferences.gridColumns,
+            isPortrait: isPortraitScreen
+        )
     }
 
-    /// Columns per page: user-configured, clamped to 6–10.
-    var gridColumns: Int {
-        GridMetrics.effectiveColumns(preference: preferences.gridColumns)
-    }
+    /// Rows per page: user-configured (4–6), swapped with columns on portrait screens.
+    var gridRows: Int { effectiveGrid.rows }
+
+    /// Columns per page: user-configured (6–10), swapped with rows on portrait screens.
+    var gridColumns: Int { effectiveGrid.columns }
 
     init(
         appIndex: AppIndexStore = AppIndexStore(),
@@ -224,7 +230,7 @@ final class LaunchpadViewModel {
         preferencesStore: PreferencesStore = PreferencesStore(),
         layoutPersistence: LayoutPersistenceStore = LayoutPersistenceStore(),
         trasher: AppTrashing = SystemAppTrasher(),
-        screenHeight: CGFloat = NSScreen.main?.frame.height ?? 1080
+        isPortraitScreen: Bool = false
     ) {
         self.appIndex = appIndex
         self.layoutStore = layoutStore
@@ -234,7 +240,7 @@ final class LaunchpadViewModel {
         self.preferencesStore = preferencesStore
         self.layoutPersistence = layoutPersistence
         self.trasher = trasher
-        self.screenHeight = screenHeight
+        self.isPortraitScreen = isPortraitScreen
         self.preferences = (try? preferencesStore.load()) ?? .default
     }
 
@@ -424,6 +430,14 @@ final class LaunchpadViewModel {
         DiagLog.write("bootstrapScan: scanned \(urls.map(\.path)) -> \(result.records.count) app(s), \(result.directoryFolders.count) directory-folder(s)")
         applyScanResult(result)
         persistLayout()
+    }
+
+    /// Called each time the overlay is shown: swaps rows/columns when the
+    /// target display's orientation differs from the last one used.
+    func updateScreenOrientation(isPortrait: Bool) {
+        guard isPortrait != isPortraitScreen else { return }
+        isPortraitScreen = isPortrait
+        applyGridSettingsChange()
     }
 
     /// Re-reads preferences and applies a grid capacity change using per-page
@@ -871,7 +885,7 @@ final class LaunchpadViewModel {
         let rowDelta = Int((translation.height / cellH).rounded())
 
         let (srcCol, srcRow) = positions[sourceIndex]
-        let targetCol = max(0, min(GridMetrics.columns - 1, srcCol + colDelta))
+        let targetCol = max(0, min(gridColumns - 1, srcCol + colDelta))
         let targetRow = max(0, srcRow + rowDelta)
 
         // Among remaining items (source removed), insert before the first whose
@@ -981,7 +995,7 @@ final class LaunchpadViewModel {
         var col = 0
         var row = 0
         var result: [(Int, Int)] = []
-        let columns = GridMetrics.columns
+        let columns = gridColumns
 
         func key(_ c: Int, _ r: Int) -> String { "\(c),\(r)" }
 

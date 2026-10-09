@@ -70,6 +70,7 @@ final class OverlayWindowController {
     /// just under the Dock's window level). Observed only in that mode so
     /// we can get out of the way without stealing focus back.
     private var resignActiveObserver: NSObjectProtocol?
+    private var screenParametersObserver: NSObjectProtocol?
 
     var exposedViewModel: LaunchpadViewModel { viewModel }
 
@@ -131,6 +132,25 @@ final class OverlayWindowController {
                 self?.viewModel.applyGridSettingsChange()
             }
         }
+        screenParametersObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didChangeScreenParametersNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.refreshForScreenChange()
+            }
+        }
+    }
+
+    /// The display rotated or changed resolution while the overlay is open:
+    /// resize the window to the new frame and re-evaluate orientation.
+    private func refreshForScreenChange() {
+        guard let window, window.isVisible else { return }
+        let screen = window.screen ?? NSScreen.main ?? NSScreen.screens.first
+        guard let frame = screen?.frame else { return }
+        window.setFrame(frame, display: true)
+        viewModel.updateScreenOrientation(isPortrait: GridMetrics.isPortrait(screenSize: frame.size))
     }
 
     func toggle() {
@@ -144,6 +164,7 @@ final class OverlayWindowController {
     func show() {
         // If already visible, just re-assert key focus (e.g. hotkey while open).
         if let existing = window, existing.isVisible {
+            refreshForScreenChange()
             activateForKeyboard(existing)
             return
         }
@@ -155,6 +176,8 @@ final class OverlayWindowController {
         // Dock even in Dock-visible mode; only the window LEVEL (see below)
         // determines whether the Dock renders on top of it.
         let frame = screen?.frame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
+        // Rows and columns swap on portrait displays; re-evaluated per show.
+        viewModel.updateScreenOrientation(isPortrait: GridMetrics.isPortrait(screenSize: frame.size))
 
         let window = OverlayWindow(
             contentRect: frame,

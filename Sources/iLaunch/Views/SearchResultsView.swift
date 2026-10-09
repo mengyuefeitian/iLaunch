@@ -10,14 +10,20 @@ struct SearchResultsView: View {
     let onDismiss: () -> Void
     var animate: Bool = true
 
-    private let columns = Array(
-        repeating: GridItem(.fixed(GridMetrics.tileWidth), spacing: GridMetrics.columnSpacing),
-        count: GridMetrics.columns
-    )
+    /// Result columns: fixed at the landscape default, except on portrait
+    /// screens where the caller passes the narrower swapped column count.
+    var columnCount: Int = GridMetrics.columns
+
+    private var columns: [GridItem] {
+        Array(
+            repeating: GridItem(.fixed(GridMetrics.tileWidth), spacing: GridMetrics.columnSpacing),
+            count: columnCount
+        )
+    }
 
     private var gridWidth: CGFloat {
-        CGFloat(GridMetrics.columns) * GridMetrics.tileWidth
-            + CGFloat(GridMetrics.columns - 1) * GridMetrics.columnSpacing
+        CGFloat(columnCount) * GridMetrics.tileWidth
+            + CGFloat(columnCount - 1) * GridMetrics.columnSpacing
     }
 
     var body: some View {

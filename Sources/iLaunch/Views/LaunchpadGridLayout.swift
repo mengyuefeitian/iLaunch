@@ -15,7 +15,7 @@ extension View {
 /// enlarged items to span 2 columns × 2 rows. Uses a simple occupancy map
 /// to flow items around enlarged tiles.
 struct LaunchpadGridLayout: Layout {
-    var columns: Int = GridMetrics.columns
+    var columns: Int
     var tileWidth: CGFloat = GridMetrics.tileWidth
     var tileHeight: CGFloat = GridMetrics.tileHeight
     var columnSpacing: CGFloat = GridMetrics.columnSpacing

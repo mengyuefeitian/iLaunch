@@ -233,7 +233,8 @@ struct ContentView: View {
                     viewModel.hideApp(id: item.id)
                 },
                 onDismiss: { dismiss() },
-                animate: animEnabled && preferences.animateSearch
+                animate: animEnabled && preferences.animateSearch,
+                columnCount: viewModel.isPortraitScreen ? viewModel.gridColumns : GridMetrics.columns
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         } else {

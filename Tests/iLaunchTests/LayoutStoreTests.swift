@@ -718,3 +718,25 @@ private func makeFolder(_ id: String, _ items: [String]) -> LaunchpadFolder {
     #expect(store.layout.folders.isEmpty)
     #expect(store.layout.pages == [[.app("a"), .app("b")]])
 }
+
+@Test func swappingGridOrientationKeepsItemOrderAndPageContents() {
+    let ids = (0..<40).map { "app\($0)" }
+    let pages: [[LaunchpadItem]] = [
+        ids[0..<28].map { .app($0) },
+        ids[28..<40].map { .app($0) }
+    ]
+    var store = LayoutStore(layout: .init(
+        pages: pages,
+        folders: [],
+        hiddenAppIDs: [],
+        grid: .init(columns: 7, rows: 4, iconSize: 72)
+    ))
+
+    store.updateGrid(columns: 4, rows: 7)
+    #expect(store.layout.pages == pages)
+    #expect(store.layout.pages.flatMap { $0 } == ids.map { LaunchpadItem.app($0) })
+
+    store.updateGrid(columns: 7, rows: 4)
+    #expect(store.layout.pages == pages)
+    #expect(store.layout.pages.flatMap { $0 } == ids.map { LaunchpadItem.app($0) })
+}

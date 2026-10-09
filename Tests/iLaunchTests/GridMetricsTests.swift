@@ -75,3 +75,49 @@ import Testing
     #expect(chromeW == layoutW - inset * 2)
     #expect(chromeW < layoutW)
 }
+
+@Test func effectiveGridKeepsLandscapeValues() {
+    let grid = GridMetrics.effectiveGrid(rowsPreference: 4, columnsPreference: 7, isPortrait: false)
+    #expect(grid.rows == 4)
+    #expect(grid.columns == 7)
+}
+
+@Test func effectiveGridSwapsRowsAndColumnsOnPortrait() {
+    let defaults = GridMetrics.effectiveGrid(rowsPreference: 4, columnsPreference: 7, isPortrait: true)
+    #expect(defaults.rows == 7)
+    #expect(defaults.columns == 4)
+
+    let custom = GridMetrics.effectiveGrid(rowsPreference: 5, columnsPreference: 8, isPortrait: true)
+    #expect(custom.rows == 8)
+    #expect(custom.columns == 5)
+
+    let maximum = GridMetrics.effectiveGrid(rowsPreference: 6, columnsPreference: 10, isPortrait: true)
+    #expect(maximum.rows == 10)
+    #expect(maximum.columns == 6)
+}
+
+@Test func effectiveGridClampsOutOfRangePreferencesBeforeSwapping() {
+    let landscape = GridMetrics.effectiveGrid(rowsPreference: 99, columnsPreference: 2, isPortrait: false)
+    #expect(landscape.rows == 4)
+    #expect(landscape.columns == 6)
+
+    let portrait = GridMetrics.effectiveGrid(rowsPreference: 99, columnsPreference: 50, isPortrait: true)
+    #expect(portrait.rows == 10)
+    #expect(portrait.columns == 4)
+}
+
+@Test func effectiveGridPreservesPageCapacityAcrossOrientations() {
+    for rows in 4...6 {
+        for columns in 6...10 {
+            let landscape = GridMetrics.effectiveGrid(rowsPreference: rows, columnsPreference: columns, isPortrait: false)
+            let portrait = GridMetrics.effectiveGrid(rowsPreference: rows, columnsPreference: columns, isPortrait: true)
+            #expect(landscape.rows * landscape.columns == portrait.rows * portrait.columns)
+        }
+    }
+}
+
+@Test func isPortraitRequiresHeightGreaterThanWidth() {
+    #expect(GridMetrics.isPortrait(screenSize: CGSize(width: 1080, height: 1920)))
+    #expect(!GridMetrics.isPortrait(screenSize: CGSize(width: 1920, height: 1080)))
+    #expect(!GridMetrics.isPortrait(screenSize: CGSize(width: 1000, height: 1000)))
+}

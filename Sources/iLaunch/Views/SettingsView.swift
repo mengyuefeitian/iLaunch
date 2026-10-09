@@ -269,6 +269,9 @@ struct AppearanceSettingsView: View {
                     Text("10").tag(10)
                 }
                 .pickerStyle(.segmented)
+                Text(Localizer.t("settings.gridPortraitHint"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
 
                 Toggle(Localizer.t("settings.rememberLastPage"), isOn: $preferences.rememberLastPage)
                 Text(Localizer.t("settings.rememberLastPageHint"))

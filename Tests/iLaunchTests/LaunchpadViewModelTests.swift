@@ -133,17 +133,15 @@ import Testing
     try? FileManager.default.removeItem(at: tempURL)
 }
 
-@MainActor @Test func gridRowsFollowScreenHeight() throws {
-    // Rows are now fixed by user preference (default 4), not screen-adaptive.
+@MainActor @Test func gridRowsComeFromPreferenceNotScreen() throws {
+    // Rows are fixed by user preference (default 4), not screen-adaptive.
     let prefsURL = FileManager.default.temporaryDirectory
         .appendingPathComponent("test-prefs-\(UUID().uuidString).json")
     let store = PreferencesStore(fileStore: JSONFileStore<UserPreferences>(url: prefsURL))
     try store.save(.default)
 
-    let small = LaunchpadViewModel(preferencesStore: store, screenHeight: 1080)
-    let tall = LaunchpadViewModel(preferencesStore: store, screenHeight: 1440)
-    #expect(small.gridRows == 4)
-    #expect(tall.gridRows == 4)
+    let viewModel = LaunchpadViewModel(preferencesStore: store)
+    #expect(viewModel.gridRows == 4)
 
     try? FileManager.default.removeItem(at: prefsURL)
 }
@@ -176,8 +174,7 @@ import Testing
 
     let viewModel = LaunchpadViewModel(
         preferencesStore: preferencesStore,
-        layoutPersistence: persistence,
-        screenHeight: 1080
+        layoutPersistence: persistence
     )
     await viewModel.bootstrapScan()
 
@@ -240,8 +237,7 @@ import Testing
 
     let viewModel = LaunchpadViewModel(
         preferencesStore: preferencesStore,
-        layoutPersistence: persistence,
-        screenHeight: 1080
+        layoutPersistence: persistence
     )
     await viewModel.bootstrapScan()
 
@@ -281,8 +277,7 @@ import Testing
 
     let viewModel = LaunchpadViewModel(
         preferencesStore: preferencesStore,
-        layoutPersistence: persistence,
-        screenHeight: 1080
+        layoutPersistence: persistence
     )
     await viewModel.bootstrapScan()
 
@@ -325,8 +320,7 @@ import Testing
 
     let viewModel = LaunchpadViewModel(
         preferencesStore: preferencesStore,
-        layoutPersistence: persistence,
-        screenHeight: 1080
+        layoutPersistence: persistence
     )
     await viewModel.bootstrapScan()
 
@@ -379,8 +373,7 @@ import Testing
     let viewModel = LaunchpadViewModel(
         scanner: scanner,
         preferencesStore: preferencesStore,
-        layoutPersistence: persistence,
-        screenHeight: 1080
+        layoutPersistence: persistence
     )
     await viewModel.bootstrapScan()
 
@@ -431,8 +424,7 @@ import Testing
     let viewModel = LaunchpadViewModel(
         scanner: scanner,
         preferencesStore: preferencesStore,
-        layoutPersistence: persistence,
-        screenHeight: 1080
+        layoutPersistence: persistence
     )
 
     async let first: Void = viewModel.bootstrapScan()
@@ -509,8 +501,7 @@ import Testing
 
     let viewModel = LaunchpadViewModel(
         preferencesStore: preferencesStore,
-        layoutPersistence: persistence,
-        screenHeight: 1080
+        layoutPersistence: persistence
     )
     await viewModel.bootstrapScan()
 
@@ -560,8 +551,7 @@ import Testing
 
     let viewModel = LaunchpadViewModel(
         preferencesStore: preferencesStore,
-        layoutPersistence: persistence,
-        screenHeight: 1080
+        layoutPersistence: persistence
     )
     await viewModel.bootstrapScan()
 
@@ -620,8 +610,7 @@ import Testing
 
     let viewModel = LaunchpadViewModel(
         preferencesStore: preferencesStore,
-        layoutPersistence: persistence,
-        screenHeight: 1080
+        layoutPersistence: persistence
     )
 
     // First scan: the two Apple apps are collected into folder:apple.
@@ -1158,4 +1147,101 @@ private func makeBundle(in root: URL, name: String, bundleID: String) throws {
 
     viewModel.searchText = "zzzz"
     #expect(viewModel.firstLaunchableSearchResult() == nil)
+}
+
+// MARK: - Screen orientation
+
+/// Builds a view model on a temp layout file holding `itemCount` apps in a
+/// landscape 4 x 7 grid (28 per page), with default preferences.
+@MainActor
+private func makeOrientationFixture(itemCount: Int) throws -> (
+    viewModel: LaunchpadViewModel,
+    persistence: LayoutPersistenceStore,
+    layoutURL: URL,
+    prefsURL: URL,
+    itemIDs: [String]
+) {
+    let records = (0..<itemCount).map { makeRecord("app\($0)") }
+    let ids = records.map(\.id)
+    let layoutURL = FileManager.default.temporaryDirectory
+        .appendingPathComponent("test-layout-\(UUID().uuidString).json")
+    let persistence = LayoutPersistenceStore(fileStore: JSONFileStore<LaunchpadLayout>(url: layoutURL))
+    let prefsURL = FileManager.default.temporaryDirectory
+        .appendingPathComponent("test-prefs-\(UUID().uuidString).json")
+    let prefsStore = PreferencesStore(fileStore: JSONFileStore<UserPreferences>(url: prefsURL))
+    try prefsStore.save(.default)
+
+    var layout = LaunchpadLayout(
+        pages: [],
+        folders: [],
+        hiddenAppIDs: [],
+        grid: .init(columns: 7, rows: 4, iconSize: 72)
+    )
+    layout.pages = stride(from: 0, to: ids.count, by: 28).map { start in
+        ids[start..<min(start + 28, ids.count)].map { LaunchpadItem.app($0) }
+    }
+    layout.pageCapacity = 28
+
+    let viewModel = LaunchpadViewModel(
+        appIndex: AppIndexStore(records: Dictionary(uniqueKeysWithValues: records.map { ($0.id, $0) })),
+        layoutStore: LayoutStore(layout: layout),
+        preferencesStore: prefsStore,
+        layoutPersistence: persistence
+    )
+    return (viewModel, persistence, layoutURL, prefsURL, ids)
+}
+
+@MainActor @Test func switchingToPortraitSwapsGridAndPersistsLayout() throws {
+    let fixture = try makeOrientationFixture(itemCount: 40)
+    defer {
+        try? FileManager.default.removeItem(at: fixture.layoutURL)
+        try? FileManager.default.removeItem(at: fixture.prefsURL)
+    }
+    #expect(fixture.viewModel.gridRows == 4)
+    #expect(fixture.viewModel.gridColumns == 7)
+    #expect(!FileManager.default.fileExists(atPath: fixture.layoutURL.path))
+
+    fixture.viewModel.updateScreenOrientation(isPortrait: true)
+
+    #expect(fixture.viewModel.gridRows == 7)
+    #expect(fixture.viewModel.gridColumns == 4)
+    let saved = fixture.persistence.load()
+    #expect(saved.grid.columns == 4)
+    #expect(saved.grid.rows == 7)
+}
+
+@MainActor @Test func repeatingTheSameOrientationDoesNotRepersistLayout() throws {
+    let fixture = try makeOrientationFixture(itemCount: 40)
+    defer {
+        try? FileManager.default.removeItem(at: fixture.layoutURL)
+        try? FileManager.default.removeItem(at: fixture.prefsURL)
+    }
+
+    fixture.viewModel.updateScreenOrientation(isPortrait: false)
+
+    #expect(fixture.viewModel.gridRows == 4)
+    #expect(fixture.viewModel.gridColumns == 7)
+    #expect(!FileManager.default.fileExists(atPath: fixture.layoutURL.path))
+
+    fixture.viewModel.updateScreenOrientation(isPortrait: true)
+    try FileManager.default.removeItem(at: fixture.layoutURL)
+    fixture.viewModel.updateScreenOrientation(isPortrait: true)
+
+    #expect(!FileManager.default.fileExists(atPath: fixture.layoutURL.path))
+}
+
+@MainActor @Test func orientationRoundTripPreservesItemOrderAcrossPages() throws {
+    let fixture = try makeOrientationFixture(itemCount: 40)
+    defer {
+        try? FileManager.default.removeItem(at: fixture.layoutURL)
+        try? FileManager.default.removeItem(at: fixture.prefsURL)
+    }
+    let before = fixture.viewModel.visiblePages.map { $0.map(\.id) }
+    #expect(before.flatMap { $0 } == fixture.itemIDs)
+
+    fixture.viewModel.updateScreenOrientation(isPortrait: true)
+    fixture.viewModel.updateScreenOrientation(isPortrait: false)
+
+    let after = fixture.viewModel.visiblePages.map { $0.map(\.id) }
+    #expect(after == before)
 }
