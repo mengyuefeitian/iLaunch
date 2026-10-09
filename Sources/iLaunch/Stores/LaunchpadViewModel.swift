@@ -229,8 +229,7 @@ final class LaunchpadViewModel {
         scanner: AppScanner = AppScanner(),
         preferencesStore: PreferencesStore = PreferencesStore(),
         layoutPersistence: LayoutPersistenceStore = LayoutPersistenceStore(),
-        trasher: AppTrashing = SystemAppTrasher(),
-        isPortraitScreen: Bool = false
+        trasher: AppTrashing = SystemAppTrasher()
     ) {
         self.appIndex = appIndex
         self.layoutStore = layoutStore
@@ -240,7 +239,7 @@ final class LaunchpadViewModel {
         self.preferencesStore = preferencesStore
         self.layoutPersistence = layoutPersistence
         self.trasher = trasher
-        self.isPortraitScreen = isPortraitScreen
+        self.isPortraitScreen = false
         self.preferences = (try? preferencesStore.load()) ?? .default
     }
 

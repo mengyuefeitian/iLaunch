@@ -1154,11 +1154,15 @@ private func makeBundle(in root: URL, name: String, bundleID: String) throws {
 /// Builds a view model on a temp layout file holding `itemCount` apps in a
 /// landscape 4 x 7 grid (28 per page), with default preferences.
 @MainActor
-private func makeOrientationFixture(itemCount: Int) throws -> (
+private func makeOrientationFixture(
+    itemCount: Int,
+    preferences: UserPreferences = .default
+) throws -> (
     viewModel: LaunchpadViewModel,
     persistence: LayoutPersistenceStore,
     layoutURL: URL,
     prefsURL: URL,
+    prefsStore: PreferencesStore,
     itemIDs: [String]
 ) {
     let records = (0..<itemCount).map { makeRecord("app\($0)") }
@@ -1169,18 +1173,21 @@ private func makeOrientationFixture(itemCount: Int) throws -> (
     let prefsURL = FileManager.default.temporaryDirectory
         .appendingPathComponent("test-prefs-\(UUID().uuidString).json")
     let prefsStore = PreferencesStore(fileStore: JSONFileStore<UserPreferences>(url: prefsURL))
-    try prefsStore.save(.default)
+    try prefsStore.save(preferences)
 
+    let columns = GridMetrics.effectiveColumns(preference: preferences.gridColumns)
+    let rows = GridMetrics.effectiveRows(preference: preferences.gridRows)
+    let capacity = columns * rows
     var layout = LaunchpadLayout(
         pages: [],
         folders: [],
         hiddenAppIDs: [],
-        grid: .init(columns: 7, rows: 4, iconSize: 72)
+        grid: .init(columns: columns, rows: rows, iconSize: 72)
     )
-    layout.pages = stride(from: 0, to: ids.count, by: 28).map { start in
-        ids[start..<min(start + 28, ids.count)].map { LaunchpadItem.app($0) }
+    layout.pages = stride(from: 0, to: ids.count, by: capacity).map { start in
+        ids[start..<min(start + capacity, ids.count)].map { LaunchpadItem.app($0) }
     }
-    layout.pageCapacity = 28
+    layout.pageCapacity = capacity
 
     let viewModel = LaunchpadViewModel(
         appIndex: AppIndexStore(records: Dictionary(uniqueKeysWithValues: records.map { ($0.id, $0) })),
@@ -1188,7 +1195,7 @@ private func makeOrientationFixture(itemCount: Int) throws -> (
         preferencesStore: prefsStore,
         layoutPersistence: persistence
     )
-    return (viewModel, persistence, layoutURL, prefsURL, ids)
+    return (viewModel, persistence, layoutURL, prefsURL, prefsStore, ids)
 }
 
 @MainActor @Test func switchingToPortraitSwapsGridAndPersistsLayout() throws {
@@ -1244,4 +1251,49 @@ private func makeOrientationFixture(itemCount: Int) throws -> (
 
     let after = fixture.viewModel.visiblePages.map { $0.map(\.id) }
     #expect(after == before)
+}
+
+@MainActor @Test func customGridSurvivesRotationWithoutOverwritingPreferences() throws {
+    var custom = UserPreferences.default
+    custom.gridRows = 5
+    custom.gridColumns = 8
+    let fixture = try makeOrientationFixture(itemCount: 90, preferences: custom)
+    defer {
+        try? FileManager.default.removeItem(at: fixture.layoutURL)
+        try? FileManager.default.removeItem(at: fixture.prefsURL)
+    }
+    let viewModel = fixture.viewModel
+    let before = viewModel.visiblePages.map { $0.map(\.id) }
+    #expect(before.flatMap { $0 } == fixture.itemIDs)
+
+    func expectUserSettingUntouched() throws {
+        #expect(viewModel.preferences.gridRows == 5)
+        #expect(viewModel.preferences.gridColumns == 8)
+        let onDisk = try fixture.prefsStore.load()
+        #expect(onDisk.gridRows == 5)
+        #expect(onDisk.gridColumns == 8)
+    }
+
+    #expect(viewModel.gridRows == 5)
+    #expect(viewModel.gridColumns == 8)
+    try expectUserSettingUntouched()
+
+    viewModel.updateScreenOrientation(isPortrait: true)
+    #expect(viewModel.gridRows == 8)
+    #expect(viewModel.gridColumns == 5)
+    let portraitSaved = fixture.persistence.load()
+    #expect(portraitSaved.grid.columns == 5)
+    #expect(portraitSaved.grid.rows == 8)
+    try expectUserSettingUntouched()
+
+    viewModel.updateScreenOrientation(isPortrait: false)
+    #expect(viewModel.gridRows == 5)
+    #expect(viewModel.gridColumns == 8)
+    let landscapeSaved = fixture.persistence.load()
+    #expect(landscapeSaved.grid.columns == 8)
+    #expect(landscapeSaved.grid.rows == 5)
+    try expectUserSettingUntouched()
+
+    let after = viewModel.visiblePages.map { $0.map(\.id) }
+    #expect(after.flatMap { $0 } == before.flatMap { $0 })
 }
