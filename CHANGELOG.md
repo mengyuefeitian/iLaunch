@@ -1,3 +1,11 @@
+## 1.13.0 - 2026-10-09
+
+### Features
+- On portrait displays the page grid now swaps rows and columns automatically, like transposing in Excel: the default 4 rows x 7 columns becomes 7 rows x 4 columns, and any custom rows/columns setting is swapped the same way. Page capacity and the order of your apps stay exactly as you remember them. The layout also updates when you rotate a display while the launcher is open.
+
+### Fixes
+- Dragging apps to reorder now follows your configured column count instead of always assuming 7 columns.
+
 ## 1.12.0 - 2026-10-02
 
 ### Features
