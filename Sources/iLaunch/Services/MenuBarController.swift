@@ -109,7 +109,23 @@ final class MenuBarController: NSObject {
     }
 
     @objc private func checkForUpdates() {
-        updateService?.checkForUpdates()
+        Self.performUpdateCheck(
+            dismissOverlay: { [overlay] in overlay.hide(reactivatePrevious: false) },
+            activateApp: { NSApp.activate(ignoringOtherApps: true) },
+            check: { [updateService] in updateService?.checkForUpdates() }
+        )
+    }
+
+    /// The overlay sits just under the Dock, so Sparkle's alert would open behind it.
+    /// Dismiss the overlay and bring the app forward before starting the check.
+    static func performUpdateCheck(
+        dismissOverlay: () -> Void,
+        activateApp: () -> Void,
+        check: () -> Void
+    ) {
+        dismissOverlay()
+        activateApp()
+        check()
     }
 
     @objc private func quit() {
