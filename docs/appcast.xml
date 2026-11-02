@@ -7,6 +7,18 @@
     <language>en</language>
 
     <item>
+      <title>Version 1.13.1</title>
+      <pubDate>Mon, 02 Nov 2026 20:03:35 +0800</pubDate>
+      <sparkle:version>1.13.1</sparkle:version>
+      <sparkle:shortVersionString>1.13.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <enclosure
+        url="https://github.com/mengyuefeitian/iLaunch/releases/download/v1.13.1/iLaunch-1.13.1-local.dmg"
+        type="application/octet-stream"
+        sparkle:edSignature="jb4wnGCGS2JwkTJIELIyw8iF9Wcc3kHWlV9NObtZsk9OVGE8fOCxTzm0ODR6VBabSlt/NHtKHWCRAj6LV3n4AA==" length="6273005" />
+    </item>
+
+    <item>
       <title>Version 1.13.0</title>
       <pubDate>Fri, 09 Oct 2026 15:43:18 +0800</pubDate>
       <sparkle:version>1.13.0</sparkle:version>
