@@ -77,6 +77,42 @@ enum DiagLog {
 
     static var logFileURL: URL? { logURL }
 
+    /// Returns `text` with its non-empty lines in reverse order, so the newest
+    /// entry (the last one appended) comes first.
+    static func reversedLines(_ text: String) -> String {
+        text.split(whereSeparator: \.isNewline)
+            .reversed()
+            .map { $0 + "\n" }
+            .joined()
+    }
+
+    /// Writes `incept_diag_newest_first.log` next to the main log (overwriting
+    /// any previous copy) with the entries in reverse order and returns its
+    /// URL. The main log stays append-only and is never modified.
+    static func makeNewestFirstCopy() -> URL? {
+        guard let source = logURL,
+              let data = try? Data(contentsOf: source),
+              let text = String(data: data, encoding: .utf8) else { return nil }
+        let copy = source.deletingLastPathComponent()
+            .appendingPathComponent("incept_diag_newest_first.log")
+        do {
+            try reversedLines(text).write(to: copy, atomically: true, encoding: .utf8)
+            return copy
+        } catch {
+            return nil
+        }
+    }
+
+    /// The file to reveal in Finder: the newest-first copy, falling back to the
+    /// original log if the copy cannot be made. Creates the log if missing.
+    static func revealableLogURL() -> URL? {
+        guard let logURL = logFileURL else { return nil }
+        if !FileManager.default.fileExists(atPath: logURL.path) {
+            write("log file created")
+        }
+        return makeNewestFirstCopy() ?? logURL
+    }
+
     private static func rotateIfNeeded(_ url: URL) {
         guard let attrs = try? FileManager.default.attributesOfItem(atPath: url.path),
               let size = attrs[.size] as? UInt64,

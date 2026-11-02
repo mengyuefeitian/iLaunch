@@ -101,10 +101,7 @@ final class MenuBarController: NSObject {
     }
 
     @objc private func openLogs() {
-        guard let logURL = DiagLog.logFileURL else { return }
-        if !FileManager.default.fileExists(atPath: logURL.path) {
-            DiagLog.write("log file created")
-        }
+        guard let logURL = DiagLog.revealableLogURL() else { return }
         NSWorkspace.shared.activateFileViewerSelecting([logURL])
     }
 

@@ -1,3 +1,9 @@
+## 1.13.2 - 2026-11-02
+
+### Features
+- The diagnostic log can now be viewed newest-first: "Open Logs" reveals a newest-first copy so the latest entries are at the top.
+
+
 ## 1.13.1 - 2026-11-02
 
 ### Fixes

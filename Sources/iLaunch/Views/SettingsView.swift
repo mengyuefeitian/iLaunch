@@ -204,7 +204,7 @@ struct LogManagementSettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Button(Localizer.t("about.openLogFolder")) {
-                    if let url = DiagLog.logFileURL {
+                    if let url = DiagLog.revealableLogURL() {
                         NSWorkspace.shared.activateFileViewerSelecting([url])
                     }
                 }
