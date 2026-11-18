@@ -97,21 +97,7 @@ struct SettingsView: View {
             }
         }
         .id(languageVersion)
-        // The hosting window uses `.fullSizeContentView` so NavigationSplitView's
-        // toolbar scroll-edge effect lands correctly under the titlebar (see
-        // SettingsWindowController). That makes the hosting view taller than
-        // the window's nominal content size by the titlebar/toolbar height,
-        // and that extra height isn't a fixed constant — it varies with the
-        // OS version, window subtitle, and accessibility text size. Rather
-        // than hardcode it, use a flexible frame with contentSize as the
-        // minimum so the root always grows to fill whatever the hosting view
-        // actually is, with no empty strips top or bottom.
-        .frame(
-            minWidth: SettingsWindowController.contentSize.width,
-            maxWidth: .infinity,
-            minHeight: SettingsWindowController.contentSize.height,
-            maxHeight: .infinity
-        )
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
             preferences = (try? preferencesStore.load()) ?? .default
             Localizer.setLanguage(preferences.language)
@@ -129,6 +115,9 @@ struct SettingsView: View {
         DiagLog.configure(enabled: preferences.diagLoggingEnabled)
         do {
             try preferencesStore.save(preferences)
+            NotificationCenter.default.post(
+                name: .iLaunchFiveFingerGesturesChanged, object: preferences.fiveFingerGesturesEnabled
+            )
             DiagLog.write("preferences saved OK, showSystemApps=\(preferences.showSystemApplications)")
         } catch {
             DiagLog.write("preferences SAVE FAILED: \(error)")
@@ -159,6 +148,7 @@ struct GeneralSettingsView: View {
                 Toggle(Localizer.t("settings.animateFolder"), isOn: $preferences.animateFolder)
                 Toggle(Localizer.t("settings.animateDrag"), isOn: $preferences.animateDrag)
                 Toggle(Localizer.t("settings.animateSearch"), isOn: $preferences.animateSearch)
+                Toggle(Localizer.t("settings.fiveFingerGestures"), isOn: $preferences.fiveFingerGesturesEnabled)
             }
 
             Section(Localizer.t("settings.launch")) {
@@ -187,6 +177,7 @@ struct GeneralSettingsView: View {
         .onChange(of: preferences.animateFolder) { _, _ in onSave() }
         .onChange(of: preferences.animateDrag) { _, _ in onSave() }
         .onChange(of: preferences.animateSearch) { _, _ in onSave() }
+        .onChange(of: preferences.fiveFingerGesturesEnabled) { _, _ in onSave() }
     }
 }
 

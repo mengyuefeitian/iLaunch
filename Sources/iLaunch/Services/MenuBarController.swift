@@ -97,6 +97,9 @@ final class MenuBarController: NSObject {
     }
 
     @objc private func openSettings() {
+        if overlay.isVisible {
+            overlay.hide(reactivatePrevious: false)
+        }
         settings.show(viewModel: overlay.exposedViewModel, hotKeyManager: hotKeyManager)
     }
 

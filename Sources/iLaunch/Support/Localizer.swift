@@ -87,6 +87,9 @@ struct Localizer {
 
         // Launch settings
         "settings.hotKey": "Global shortcut",
+        "settings.hotKeyForceF4": "Force bind F4",
+        "settings.hotKeyF4Bound": "F4 shortcut restored.",
+        "settings.hotKeyF4Failed": "Could not bind F4. Check the keyboard and other shortcut tools.",
         "settings.hotKeyPressKeys": "Press keys…",
         "settings.hotKeyNeedsModifier": "Hold at least one modifier key (⌘⌥⌃⇧)",
         "settings.hotKeyEscReserved": "Esc is reserved to close the overlay",
@@ -117,6 +120,7 @@ struct Localizer {
         "settings.animateFolder": "Folder animation",
         "settings.animateDrag": "Drag animation",
         "settings.animateSearch": "Search transition",
+        "settings.fiveFingerGestures": "Five-finger pinch and spread",
 
         // Apps settings
         "settings.showSystemApps": "Show system applications",
@@ -210,6 +214,9 @@ struct Localizer {
 
         // Launch settings
         "settings.hotKey": "全局快捷键",
+        "settings.hotKeyForceF4": "强制绑定 F4",
+        "settings.hotKeyF4Bound": "已恢复 F4 快捷键。",
+        "settings.hotKeyF4Failed": "无法绑定 F4，请检查键盘连接和其他快捷键工具。",
         "settings.hotKeyPressKeys": "按下快捷键…",
         "settings.hotKeyNeedsModifier": "请至少按住一个修饰键（⌘⌥⌃⇧）",
         "settings.hotKeyEscReserved": "Esc 已保留用于关闭悬浮窗，不能作为快捷键",
@@ -240,6 +247,7 @@ struct Localizer {
         "settings.animateFolder": "文件夹动画",
         "settings.animateDrag": "拖拽动画",
         "settings.animateSearch": "搜索过渡动画",
+        "settings.fiveFingerGestures": "五指捏拢和张开",
 
         // Apps settings
         "settings.showSystemApps": "显示系统应用",
@@ -363,6 +371,7 @@ struct Localizer {
         "settings.animateFolder": "フォルダアニメーション",
         "settings.animateDrag": "ドラッグアニメーション",
         "settings.animateSearch": "検索トランジション",
+        "settings.fiveFingerGestures": "5本指でピンチイン・ピンチアウト",
 
         // Apps settings
         "settings.showSystemApps": "システムアプリケーションを表示",
@@ -486,6 +495,7 @@ struct Localizer {
         "settings.animateFolder": "폴더 애니메이션",
         "settings.animateDrag": "드래그 애니메이션",
         "settings.animateSearch": "검색 전환",
+        "settings.fiveFingerGestures": "다섯 손가락 오므리기 및 펼치기",
 
         // Apps settings
         "settings.showSystemApps": "시스템 응용 프로그램 표시",
@@ -609,6 +619,7 @@ struct Localizer {
         "settings.animateFolder": "Анимация папок",
         "settings.animateDrag": "Анимация перетаскивания",
         "settings.animateSearch": "Анимация поиска",
+        "settings.fiveFingerGestures": "Сведение и разведение пяти пальцев",
 
         // Apps settings
         "settings.showSystemApps": "Показывать системные приложения",

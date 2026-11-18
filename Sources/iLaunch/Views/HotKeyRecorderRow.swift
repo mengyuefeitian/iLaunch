@@ -14,6 +14,7 @@ struct HotKeyRecorderRow: View {
 
     @State private var isRecording = false
     @State private var errorMessage: String?
+    @State private var didBindF4 = false
     @State private var monitor: Any?
     @State private var recordingWindow: NSWindow?
     @State private var windowCloseObserver: NSObjectProtocol?
@@ -24,6 +25,8 @@ struct HotKeyRecorderRow: View {
             HStack {
                 Text(Localizer.t("settings.hotKey"))
                 Spacer()
+                Button(Localizer.t("settings.hotKeyForceF4")) { bindF4() }
+                    .buttonStyle(.bordered)
                 Button(buttonTitle) {
                     if isRecording {
                         stopRecording()
@@ -37,6 +40,10 @@ struct HotKeyRecorderRow: View {
                 Text(errorMessage)
                     .font(.caption)
                     .foregroundStyle(.red)
+            } else if didBindF4 {
+                Text(Localizer.t("settings.hotKeyF4Bound"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
         .onAppear { installWindowLifecycleObservers() }
@@ -48,6 +55,9 @@ struct HotKeyRecorderRow: View {
 
     private var buttonTitle: String {
         if isRecording { return Localizer.t("settings.hotKeyPressKeys") }
+        if keyCode == UInt32(kVK_F4), modifiers == 0, hotKeyManager?.usesFnF4 == true {
+            return "Fn+F4"
+        }
         return HotKeyCapture.displayString(keyCode: keyCode, modifiers: modifiers)
     }
 
@@ -79,6 +89,7 @@ struct HotKeyRecorderRow: View {
 
     private func startRecording() {
         errorMessage = nil
+        didBindF4 = false
         isRecording = true
         // Scope capture to the window that was key when recording began, so
         // a keydown delivered to some other window (e.g. the overlay,
@@ -96,6 +107,20 @@ struct HotKeyRecorderRow: View {
         }
     }
 
+    private func bindF4() {
+        stopRecording()
+        didBindF4 = false
+        guard hotKeyManager?.updateHotKey(keyCode: UInt32(kVK_F4), modifiers: 0, refreshF4: true) == true else {
+            errorMessage = Localizer.t("settings.hotKeyF4Failed")
+            return
+        }
+        errorMessage = nil
+        keyCode = UInt32(kVK_F4)
+        modifiers = 0
+        onCommitted()
+        didBindF4 = true
+    }
+
     private func stopRecording() {
         if let monitor {
             NSEvent.removeMonitor(monitor)
@@ -106,13 +131,12 @@ struct HotKeyRecorderRow: View {
     }
 
     private func handleCapturedKey(_ event: NSEvent) {
-        let candidateKeyCode = UInt32(event.keyCode)
+        let candidateKeyCode = event.keyCode == UInt16(kVK_F20) && hotKeyManager?.usesFnF4 == true
+            ? UInt32(kVK_F4) : UInt32(event.keyCode)
         let candidateModifiers = HotKeyCapture.carbonModifiers(from: event.modifierFlags)
 
-        guard HotKeyCapture.isValid(keyCode: candidateKeyCode, modifiers: candidateModifiers) else {
-            errorMessage = candidateKeyCode == UInt32(kVK_Escape)
-                ? Localizer.t("settings.hotKeyEscReserved")
-                : Localizer.t("settings.hotKeyNeedsModifier")
+        guard HotKeyCapture.isValid(keyCode: candidateKeyCode) else {
+            errorMessage = Localizer.t("settings.hotKeyEscReserved")
             stopRecording()
             return
         }

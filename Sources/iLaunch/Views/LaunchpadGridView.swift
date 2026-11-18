@@ -62,6 +62,7 @@ struct LaunchpadGridView: View {
     @State private var mergeTargetID: String? = nil
     /// SwiftUI drag handed off to floating monitor — ignore further gesture events.
     @State private var handoffToFloating = false
+    @State private var gridDragLocation: CGPoint = .zero
 
     private var activeMergeTargetID: String? {
         mergeTargetID ?? externalMergeTargetID
@@ -93,9 +94,7 @@ struct LaunchpadGridView: View {
                 }
                 .offset(x: -CGFloat(currentPage) * width + dragOffset)
                 .animation(
-                    (editMode || isDraggingTile)
-                        ? nil
-                        : (animatePageFlip ? .spring(response: 0.35, dampingFraction: 0.85) : nil),
+                    animatePageFlip ? .spring(response: 0.35, dampingFraction: 0.85) : nil,
                     value: currentPage
                 )
                 // Page swipe only when not in edit mode and not mid-tile-drag.
@@ -131,7 +130,11 @@ struct LaunchpadGridView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .iLaunchPageScroll)) { note in
             let direction = (note.object as? Int) ?? 0
-            goTo(currentPage + direction)
+            let previousPage = currentPage
+            goTo(previousPage + direction)
+            if currentPage != previousPage, isDraggingTile, let editDragID {
+                promoteGridDrag(id: editDragID, at: gridDragLocation)
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: .iLaunchGoToPage)) { note in
             if let page = note.object as? Int {
@@ -295,6 +298,7 @@ struct LaunchpadGridView: View {
         if handoffToFloating { return }
 
         isDraggingTile = true
+        gridDragLocation = value.location
         let translation = CGSize(
             width: value.translation.width + dragPageOffset,
             height: value.translation.height
@@ -309,15 +313,7 @@ struct LaunchpadGridView: View {
             if case .app = item.kind { return true }
             return false
         }()
-        if currentPage != pageBefore, onPromoteToFloatingDrag != nil {
-            handoffToFloating = true
-            mergeTargetID = nil
-            hoveredFolderID = nil
-            onPromoteToFloatingDrag?(item.id, value.location)
-            NotificationCenter.default.post(
-                name: .iLaunchEditDragChanged,
-                object: EditDragUpdate(id: item.id, translation: .zero)
-            )
+        if currentPage != pageBefore, promoteGridDrag(id: item.id, at: value.location) {
             return
         }
 
@@ -367,6 +363,20 @@ struct LaunchpadGridView: View {
         )
     }
 
+    @discardableResult
+    private func promoteGridDrag(id: String, at point: CGPoint) -> Bool {
+        guard !handoffToFloating, let onPromoteToFloatingDrag else { return false }
+        handoffToFloating = true
+        mergeTargetID = nil
+        hoveredFolderID = nil
+        onPromoteToFloatingDrag(id, point)
+        NotificationCenter.default.post(
+            name: .iLaunchEditDragChanged,
+            object: EditDragUpdate(id: id, translation: .zero)
+        )
+        return true
+    }
+
     private func handleDragEnded(
         item: LaunchpadDisplayItem,
         localIndex: Int,
@@ -374,10 +384,7 @@ struct LaunchpadGridView: View {
         value: DragGesture.Value
     ) {
         // Floating handoff owns drop — do not resolve twice.
-        if handoffToFloating {
-            resetDragHandoffState()
-            return
-        }
+        if handoffToFloating { return }
 
         withAnimation(animateDrag ? .spring(response: 0.25, dampingFraction: 0.7) : nil) {
             hoveredFolderID = nil

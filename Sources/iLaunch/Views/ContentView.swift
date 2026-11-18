@@ -6,6 +6,7 @@ struct ContentView: View {
     @Bindable var viewModel: LaunchpadViewModel
     let preferences: UserPreferences
 
+    @State private var hasAppeared = false
     @State private var backgroundIndex = 0
     @State private var cachedUploadedImage: NSImage?
     @State private var cachedUploadedPath: String?
@@ -15,6 +16,10 @@ struct ContentView: View {
     }
 
     private var animEnabled: Bool { !preferences.reduceMotion }
+
+    private var shouldBlurBackground: Bool {
+        viewModel.openFolder != nil && !viewModel.isFolderClosing
+    }
 
     /// Folder open/close spring — used with `withAnimation` so removal transitions run
     /// even when dismiss comes from AppKit (which does not wrap the assignment).
@@ -60,6 +65,12 @@ struct ContentView: View {
                         .allowsHitTesting(false)
 
                     contentBody
+                        .blur(radius: shouldBlurBackground ? 16 : 0)
+                        .opacity(shouldBlurBackground ? 0.45 : 1)
+                        .animation(
+                            (animEnabled && preferences.animateFolder) ? .easeOut(duration: 0.16) : nil,
+                            value: shouldBlurBackground
+                        )
                         .frame(
                             width: geo.size.width,
                             height: max(0, geo.size.height - searchChromeHeight - dockReservedHeight)
@@ -157,6 +168,13 @@ struct ContentView: View {
             }
             .frame(width: geo.size.width, height: geo.size.height)
         }
+        .scaleEffect(hasAppeared ? 1 : 0.96)
+        .opacity(hasAppeared ? 1 : 0)
+        .onAppear {
+            withAnimation((animEnabled && preferences.animateIcons) ? .easeOut(duration: 0.2) : nil) {
+                hasAppeared = true
+            }
+        }
         .coordinateSpace(name: "overlay")
         .onPreferenceChange(TileFramePreferenceKey.self) { frames in
             viewModel.tileFrames = frames
@@ -167,12 +185,6 @@ struct ContentView: View {
         .onPreferenceChange(TileActiveFramePreferenceKey.self) { frames in
             viewModel.tileActiveFrames = frames
         }
-        .animation(
-            (animEnabled && preferences.animateFolder)
-                ? .spring(response: 0.3, dampingFraction: 0.85)
-                : nil,
-            value: viewModel.openFolder?.id
-        )
         .onExitCommand {
             handleBlankTap()
         }
@@ -412,15 +424,8 @@ struct ContentView: View {
         scrollModel.update(isSearching: isSearching, isFolderOpen: viewModel.openFolder != nil)
     }
 
-    /// Dismiss the overlay first, then open the app on the next main turn.
-    /// Synchronous `NSWorkspace.open` must never block hide (cold start 2–5s).
     private func launchAndDismiss(_ record: AppRecord) {
-        // Instant dismiss — no zoom-back when leaving Launchpad to open an app.
-        viewModel.finishClosingFolder()
-        dismiss()
-        DispatchQueue.main.async {
-            _ = AppLauncher().launch(record)
-        }
+        NotificationCenter.default.post(name: .iLaunchOpenApplication, object: record)
     }
 
     private func handleTap(_ item: LaunchpadDisplayItem) {

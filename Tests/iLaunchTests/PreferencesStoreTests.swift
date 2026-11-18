@@ -4,8 +4,8 @@ import Testing
 
 @Test func defaultPreferencesAreLaunchpadFocused() {
     let preferences = UserPreferences.default
-    #expect(preferences.hotKeyCode == 49)
-    #expect(preferences.hotKeyModifiers == 2048)
+    #expect(preferences.hotKeyCode == 118)
+    #expect(preferences.hotKeyModifiers == 0)
     #expect(preferences.showMenuBarIcon == true)
     #expect(preferences.showDockIcon == true)
     #expect(preferences.overlayDisplayMode == .activeDisplay)

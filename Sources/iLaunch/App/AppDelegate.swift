@@ -1,11 +1,18 @@
 import AppKit
 
+extension Notification.Name {
+    static let iLaunchFiveFingerGesturesChanged = Notification.Name("iLaunchFiveFingerGesturesChanged")
+}
+
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let overlay = OverlayWindowController()
     private var menuBarController: MenuBarController?
     private var hotKeyManager: GlobalHotKeyManager?
     private var updateService: UpdateService?
+    private var trackpadPinch: TrackpadPinchService?
+    private var fiveFingerGesturesEnabled = false
+    private var desktopShownByGesture = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Two iLaunch.app copies (e.g. /Applications and a locally built
@@ -45,6 +52,55 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
         hotKeyManager?.start(keyCode: prefs.hotKeyCode, modifiers: prefs.hotKeyModifiers)
+        trackpadPinch = TrackpadPinchService { [weak self, overlay] direction in
+            guard let self, self.fiveFingerGesturesEnabled else { return }
+            switch direction {
+            case .inward:
+                if self.desktopShownByGesture && !overlay.isVisible {
+                    if SystemDesktopAction.toggle() { self.desktopShownByGesture = false }
+                } else {
+                    self.desktopShownByGesture = false
+                    overlay.show()
+                }
+            case .outward:
+                if overlay.isVisible {
+                    overlay.hide()
+                } else if !self.desktopShownByGesture && SystemDesktopAction.toggle() {
+                    self.desktopShownByGesture = true
+                }
+            }
+        }
+        NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.activeSpaceDidChangeNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.desktopShownByGesture = false }
+        }
+        NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main
+        ) { [weak self] notification in
+            let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
+            if let bundleID = app?.bundleIdentifier,
+               bundleID != "com.apple.finder", bundleID != Bundle.main.bundleIdentifier {
+                MainActor.assumeIsolated { self?.desktopShownByGesture = false }
+            }
+        }
+        setFiveFingerGesturesEnabled(prefs.fiveFingerGesturesEnabled)
+        NotificationCenter.default.addObserver(
+            forName: .iLaunchFiveFingerGesturesChanged, object: nil, queue: .main
+        ) { [weak self] notification in
+            guard let enabled = notification.object as? Bool else { return }
+            MainActor.assumeIsolated { self?.setFiveFingerGesturesEnabled(enabled) }
+        }
+        NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didWakeNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, self.fiveFingerGesturesEnabled else { return }
+                self.trackpadPinch?.stop()
+                self.trackpadPinch?.start()
+            }
+        }
+
         menuBarController = MenuBarController(overlay: overlay, hotKeyManager: hotKeyManager, updateService: updateService)
         // Must run BEFORE overlay.show(), not after: the overlay window sits
         // at a level above the Dock (or above the menu bar in cover-Dock
@@ -65,6 +121,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 overlay.show()
             }
         }
+    }
+
+    private func setFiveFingerGesturesEnabled(_ enabled: Bool) {
+        guard enabled != fiveFingerGesturesEnabled else { return }
+        fiveFingerGesturesEnabled = enabled
+        if enabled {
+            trackpadPinch?.start()
+        } else {
+            trackpadPinch?.stop()
+        }
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        hotKeyManager?.stop()
+        trackpadPinch?.stop()
     }
 
     /// Dock icon click: always open fullscreen launchpad.

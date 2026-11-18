@@ -46,7 +46,8 @@ arrange once and rely on forever.
 - **Live drag arrange** — tiles make way while you drag; cross-page moves,  
   reorder inside folders, and live gap / create-folder sensing on drag-out;  
   layout is saved and never reshuffled by rescans.
-- **Configurable global hotkey** — default `⌥ Space`, changeable in Settings;  
+- **Built-in five-finger gestures** — pinch to open iLaunch or restore windows, and spread to close iLaunch or show the desktop. When enabled, turn off both macOS **Apps** and **Show Desktop** pinch gestures. See the [setup guide](docs/trackpad-gestures.zh.md).
+- **Configurable global hotkey** — `F4` by default on a fresh install. Use **Force bind F4** in Settings to reapply the shortcut if it stops working.  
   also open from the menu bar or Dock.
 - **Trash / hide** — long-press or right-click to remove or hide an app;  
   launching an app dismisses the overlay immediately (no multi-second freeze).
@@ -83,7 +84,7 @@ Download the latest `iLaunch-*.dmg` from
 ## Quick start
 
 1. Launch iLaunch (or open from the menu bar / Dock).
-2. Press the global hotkey (default `⌥ Space`) to open the grid.
+2. Press the global hotkey to open the grid (`F4` by default on a fresh install, or `Fn + F4` depending on your keyboard settings).
 3. Click an app to launch it, or start typing to search.
 4. Drag apps to rearrange; drop one onto another to make a folder.
 5. Click a folder to open its popup; on enlarged folders, tap a mini icon  

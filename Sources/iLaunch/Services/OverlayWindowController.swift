@@ -3,6 +3,7 @@ import SwiftUI
 
 extension Notification.Name {
     static let iLaunchDismiss = Notification.Name("iLaunchDismiss")
+    static let iLaunchOpenApplication = Notification.Name("iLaunchOpenApplication")
     static let iLaunchPageScroll = Notification.Name("iLaunchPageScroll")
     static let iLaunchFocusSearch = Notification.Name("iLaunchFocusSearch")
     /// Posted when edit mode is cancelled from AppKit (click monitor).
@@ -22,7 +23,7 @@ struct OverlayState {
 }
 
 /// Borderless window that can become key so the search field and Esc work.
-final class OverlayWindow: NSWindow {
+final class OverlayWindow: NSPanel {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { true }
     override var acceptsFirstResponder: Bool { true }
@@ -45,6 +46,7 @@ final class OverlayWindowController {
     private var window: OverlayWindow?
     private var hostingView: FirstMouseHostingView<ContentView>?
     private var dismissObserver: NSObjectProtocol?
+    private var openApplicationObserver: NSObjectProtocol?
     private var floatingDragStartObserver: NSObjectProtocol?
     private var focusSearchObserver: NSObjectProtocol?
     private var scrollMonitor: Any?
@@ -71,8 +73,10 @@ final class OverlayWindowController {
     /// we can get out of the way without stealing focus back.
     private var resignActiveObserver: NSObjectProtocol?
     private var screenParametersObserver: NSObjectProtocol?
+    private var activeSpaceObserver: NSObjectProtocol?
 
     var exposedViewModel: LaunchpadViewModel { viewModel }
+    var isVisible: Bool { window?.isVisible == true }
 
     init() {
         dismissObserver = NotificationCenter.default.addObserver(
@@ -83,6 +87,12 @@ final class OverlayWindowController {
             MainActor.assumeIsolated {
                 self?.hide()
             }
+        }
+        openApplicationObserver = NotificationCenter.default.addObserver(
+            forName: .iLaunchOpenApplication, object: nil, queue: .main
+        ) { [weak self] note in
+            guard let record = note.object as? AppRecord else { return }
+            MainActor.assumeIsolated { self?.launchApplication(record) }
         }
         floatingDragStartObserver = NotificationCenter.default.addObserver(
             forName: .iLaunchStartFloatingDrag,
@@ -130,6 +140,17 @@ final class OverlayWindowController {
         ) { [weak self] _ in
             MainActor.assumeIsolated {
                 self?.viewModel.applyGridSettingsChange()
+            }
+        }
+        activeSpaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.activeSpaceDidChangeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, self.window?.isVisible == true else { return }
+                // Keep focus on the destination desktop when dismissing after a Space switch.
+                self.hide(reactivatePrevious: false)
             }
         }
         screenParametersObserver = NotificationCenter.default.addObserver(
@@ -181,12 +202,14 @@ final class OverlayWindowController {
 
         let window = OverlayWindow(
             contentRect: frame,
-            styleMask: [.borderless],
+            styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
         )
+        window.hidesOnDeactivate = false
+        window.becomesKeyOnlyIfNeeded = false
         window.level = OverlayPresentation.windowLevel(coverDock: coverDock)
-        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle]
+        window.collectionBehavior = [.moveToActiveSpace, .fullScreenAuxiliary, .canJoinAllApplications, .ignoresCycle]
         window.isOpaque = false
         window.backgroundColor = .clear
         window.hasShadow = false
@@ -299,12 +322,7 @@ final class OverlayWindowController {
         if NSApp.isHidden {
             NSApp.unhide(nil)
         }
-        NSApp.setActivationPolicy(.regular)
-        if #available(macOS 14.0, *) {
-            NSApp.activate()
-        } else {
-            NSApp.activate(ignoringOtherApps: true)
-        }
+        // A nonactivating panel takes keyboard focus without leaving another app's full-screen Space.
         window.orderFrontRegardless()
         window.makeKeyAndOrderFront(nil)
         // Prefer the SwiftUI host as first responder so the first click is not
@@ -319,11 +337,6 @@ final class OverlayWindowController {
         // Carbon hotkey can bounce focus back; re-assert once on next turn.
         DispatchQueue.main.async { [weak self, weak window] in
             guard let self, let window, self.window === window, window.isVisible else { return }
-            if #available(macOS 14.0, *) {
-                NSApp.activate()
-            } else {
-                NSApp.activate(ignoringOtherApps: true)
-            }
             window.makeKeyAndOrderFront(nil)
             if !(window.firstResponder is NSTextField || window.firstResponder is NSTextView) {
                 if let hosting = self.hostingView {
@@ -359,6 +372,12 @@ final class OverlayWindowController {
         removeKeyMonitor()
         removeFloatingDragMonitor()
         removeFloatingGhost()
+        if viewModel.editDragID != nil {
+            viewModel.endLiveReorder()
+            viewModel.clearFloatingDrag()
+            viewModel.gridDragItem = nil
+            viewModel.gridDragLocation = .zero
+        }
         searchChrome.remove()
         hostingView = nil
         window?.orderOut(nil)
@@ -580,7 +599,7 @@ final class OverlayWindowController {
         floatingEdgeArmed = false
 
         floatingDragMonitor = NSEvent.addLocalMonitorForEvents(
-            matching: [.leftMouseDragged, .leftMouseUp]
+            matching: [.leftMouseDragged, .leftMouseUp, .mouseMoved]
         ) { [weak self] event in
             guard let self else { return event }
             return self.handleFloatingDrag(event, itemID: itemID)
@@ -589,7 +608,8 @@ final class OverlayWindowController {
 
     private func handleFloatingDrag(_ event: NSEvent, itemID: String) -> NSEvent? {
         guard let window else { return event }
-        let windowPoint = event.locationInWindow
+        let windowPoint = event.window === window
+            ? event.locationInWindow : window.mouseLocationOutsideOfEventStream
 
         if event.type == .leftMouseDragged {
             moveFloatingGhost(to: windowPoint)
@@ -603,7 +623,7 @@ final class OverlayWindowController {
             return nil
         }
 
-        if event.type == .leftMouseUp {
+        if event.type == .leftMouseUp || NSEvent.pressedMouseButtons & 1 == 0 {
             let point = swiftUIPoint(fromWindow: windowPoint, in: window)
             viewModel.resolveDrop(
                 sourceID: itemID,
@@ -614,7 +634,7 @@ final class OverlayWindowController {
             removeFloatingDragMonitor()
             NotificationCenter.default.post(name: .iLaunchEditDragEnded, object: nil)
             NotificationCenter.default.post(name: .iLaunchGridDragEnded, object: nil)
-            return nil
+            return event.type == .leftMouseUp ? nil : event
         }
         return event
     }
@@ -794,14 +814,16 @@ final class OverlayWindowController {
         }
     }
 
-    /// Return in the search field: launch the top result like a tap would
-    /// (instant dismiss first, launch on the next main turn).
     private func launchFirstSearchResult() {
         guard let record = viewModel.firstLaunchableSearchResult() else { return }
+        launchApplication(record)
+    }
+
+    private func launchApplication(_ record: AppRecord) {
         viewModel.finishClosingFolder()
-        hide()
+        hide(reactivatePrevious: false)
         DispatchQueue.main.async {
-            _ = AppLauncher().launch(record)
+            AppLauncher.openAsynchronously(record)
         }
     }
 

@@ -8,14 +8,8 @@ import Carbon
 /// Carbon registration) so this part is unit-testable without touching any
 /// system API.
 enum HotKeyCapture {
-    /// A combo is valid to register when it holds at least one modifier
-    /// (so we never hijack plain typing) and isn't any Esc combination —
-    /// modified or bare — since Esc is reserved as the overlay's universal
-    /// close key.
-    static func isValid(keyCode: UInt32, modifiers: UInt32) -> Bool {
-        guard modifiers != 0 else { return false }
-        guard keyCode != UInt32(kVK_Escape) else { return false }
-        return true
+    static func isValid(keyCode: UInt32) -> Bool {
+        keyCode != UInt32(kVK_Escape)
     }
 
     /// Translates AppKit's modifier flags (captured from the recording

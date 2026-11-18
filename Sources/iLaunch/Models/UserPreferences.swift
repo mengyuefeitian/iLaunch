@@ -107,6 +107,7 @@ struct UserPreferences: Codable, Equatable {
     var animateFolder: Bool = true       // Folder expand/collapse animation
     var animateDrag: Bool = true         // Drag reposition animation
     var animateSearch: Bool = true       // Search results transition
+    var fiveFingerGesturesEnabled = true
     var showHiddenInSearch: Bool = true
 
     var gridRows: Int = 4          // 4/5/6 = fixed
@@ -127,8 +128,8 @@ struct UserPreferences: Codable, Equatable {
     var rememberLastPage: Bool = true
 
     static let `default` = UserPreferences(
-        hotKeyCode: 49,        // kVK_Space
-        hotKeyModifiers: 2048, // Carbon optionKey
+        hotKeyCode: 118,       // kVK_F4
+        hotKeyModifiers: 0,
         launchAtLogin: false,
         showMenuBarIcon: true,
         showDockIcon: true,
@@ -151,6 +152,7 @@ struct UserPreferences: Codable, Equatable {
         case overlayDisplayMode, scanDirectories, appIconStyle
         case language, backgroundMode, backgroundImages, autoCarousel
         case animateIcons, animatePageFlip, animateFolder, animateDrag, animateSearch
+        case fiveFingerGesturesEnabled
         case showHiddenInSearch
         case gridRows, gridColumns, iconSizeLevel, showAppNames
         case diagLoggingEnabled
@@ -211,6 +213,7 @@ struct UserPreferences: Codable, Equatable {
         animateFolder = (try? c.decodeIfPresent(Bool.self, forKey: .animateFolder)) ?? true
         animateDrag = (try? c.decodeIfPresent(Bool.self, forKey: .animateDrag)) ?? true
         animateSearch = (try? c.decodeIfPresent(Bool.self, forKey: .animateSearch)) ?? true
+        fiveFingerGesturesEnabled = (try? c.decodeIfPresent(Bool.self, forKey: .fiveFingerGesturesEnabled)) ?? true
         showHiddenInSearch = (try? c.decodeIfPresent(Bool.self, forKey: .showHiddenInSearch)) ?? true
         gridRows = (try? c.decodeIfPresent(Int.self, forKey: .gridRows)) ?? 4
         gridColumns = (try? c.decodeIfPresent(Int.self, forKey: .gridColumns)) ?? 7

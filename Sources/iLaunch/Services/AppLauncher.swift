@@ -18,6 +18,19 @@ struct SystemWorkspaceLauncher: WorkspaceLaunching {
 }
 
 struct AppLauncher {
+    @MainActor
+    static func openAsynchronously(_ record: AppRecord) {
+        DiagLog.write("App launch requested: \(record.bundleID ?? "unknown")")
+        let url = URL(fileURLWithPath: record.path)
+        NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration()) { app, error in
+            if let error = error as NSError? {
+                DiagLog.write("App launch failed: \(error.domain) (\(error.code))")
+            } else {
+                DiagLog.write("App launch completed: \(app?.bundleIdentifier ?? "unknown")")
+            }
+        }
+    }
+
     let workspace: WorkspaceLaunching
 
     init(workspace: WorkspaceLaunching = SystemWorkspaceLauncher()) {

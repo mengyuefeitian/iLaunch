@@ -3,21 +3,17 @@ import Carbon
 import Testing
 @testable import iLaunch
 
-@Test func rejectsComboWithNoModifier() {
-    #expect(HotKeyCapture.isValid(keyCode: UInt32(kVK_ANSI_K), modifiers: 0) == false)
+@Test func acceptsSingleKeys() {
+    #expect(HotKeyCapture.isValid(keyCode: UInt32(kVK_ANSI_K)))
+    #expect(HotKeyCapture.isValid(keyCode: UInt32(kVK_F4)))
 }
 
-@Test func rejectsBareEscapeEvenWithModifier() {
-    #expect(HotKeyCapture.isValid(keyCode: UInt32(kVK_Escape), modifiers: UInt32(optionKey)) == false)
+@Test func reservesEscape() {
+    #expect(!HotKeyCapture.isValid(keyCode: UInt32(kVK_Escape)))
 }
 
 @Test func acceptsOptionSpace() {
-    #expect(HotKeyCapture.isValid(keyCode: UInt32(kVK_Space), modifiers: UInt32(optionKey)) == true)
-}
-
-@Test func acceptsCommandShiftK() {
-    let modifiers = UInt32(cmdKey) | UInt32(shiftKey)
-    #expect(HotKeyCapture.isValid(keyCode: UInt32(kVK_ANSI_K), modifiers: modifiers) == true)
+    #expect(HotKeyCapture.isValid(keyCode: UInt32(kVK_Space)))
 }
 
 @Test func translatesCommandAndOptionModifierFlags() {

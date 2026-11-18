@@ -18,7 +18,13 @@ struct LaunchpadDisplayItem: Identifiable, Equatable {
 @MainActor
 @Observable
 final class LaunchpadViewModel {
-    var searchText = ""
+    var searchText = "" {
+        didSet {
+            if openFolder != nil && !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                finishClosingFolder()
+            }
+        }
+    }
     var selectedItemID: String?
 
     /// When true, tiles jiggle and can be dragged to reorder.
@@ -77,7 +83,7 @@ final class LaunchpadViewModel {
             )
             finishClosingFolder()
         }
-        let frame = tileFrames.first(where: { $0.id == item.id })?.frame ?? .zero
+        let frame = folderAnimationFrame(id: item.id) ?? .zero
         openFolderSourceFrame = frame
         DiagLog.write(
             "openFolderPopup id=\(item.id) members=\(item.members.count) sourceFrame=\(NSStringFromRect(frame))"
@@ -97,13 +103,24 @@ final class LaunchpadViewModel {
         // Refresh source frame so close can target the tile's current position
         // (page may have flipped / layout shifted while the popup was open).
         if let id = openFolder?.id,
-           let live = tileFrames.first(where: { $0.id == id })?.frame,
+           let live = folderAnimationFrame(id: id),
            live.width > 1, live.height > 1 {
             openFolderSourceFrame = live
         }
         isFolderClosing = true
         DiagLog.write("requestCloseFolder id=\(openFolder?.id ?? "?") epoch→\(folderCloseEpoch &+ 1)")
         folderCloseEpoch &+= 1
+    }
+
+    /// Use the visible folder chrome, excluding the grid cell's title and padding.
+    private func folderAnimationFrame(id: String) -> CGRect? {
+        guard let active = tileActiveFrames.filter({ $0.id == id && $0.isFolder })
+            .max(by: { $0.frame.width * $0.frame.height < $1.frame.width * $1.frame.height })?.frame else {
+            return tileFrames.first(where: { $0.id == id })?.frame
+        }
+        if enlargedFolderIDs.contains(id) { return active }
+        let inset = active.width * (1 - preferences.iconSizeLevel.multiplier) / 2
+        return active.insetBy(dx: inset, dy: inset)
     }
 
     /// Called after the close animation finishes (or immediately when animation is off).
@@ -786,6 +803,9 @@ final class LaunchpadViewModel {
 
         // Live reorder already positioned the item — persist and finish.
         if preReorderDragID == sourceID {
+            if floatingDragItemID == sourceID, layoutIndex(of: sourceID, on: page) == nil {
+                updateFloatingDrag(at: point)
+            }
             endLiveReorder()
             clearFloatingDrag()
             return

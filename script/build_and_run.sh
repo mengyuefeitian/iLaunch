@@ -50,6 +50,7 @@ APP_RESOURCES="$APP_CONTENTS/Resources"
 # (UserPreferences.appIconStyle = .icon02), not the old "D" artwork.
 ICON_SOURCE="$ROOT_DIR/Resources/Icons/icon02.icns"
 mkdir -p "$APP_RESOURCES"
+cp "$ROOT_DIR/Resources/GestureLauncher-LICENSE.txt" "$APP_RESOURCES/"
 if [ -f "$ICON_SOURCE" ]; then
   cp "$ICON_SOURCE" "$APP_RESOURCES/$APP_NAME.icns"
 fi
@@ -90,9 +91,9 @@ cat >"$INFO_PLIST" <<PLIST
   <key>CFBundleName</key>
   <string>$APP_NAME</string>
   <key>CFBundleShortVersionString</key>
-  <string>1.13.2</string>
+  <string>1.17.0</string>
   <key>CFBundleVersion</key>
-  <string>1.13.2</string>
+  <string>1.17.0</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>LSMinimumSystemVersion</key>
